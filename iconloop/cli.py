@@ -1,0 +1,176 @@
+"""icon-loop CLI.
+
+Stages are separate subcommands on purpose. Each one either costs money or
+takes minutes, and every run wants a human to look before the next step — the
+whole point of the verification stage is that it is allowed to say no.
+
+  still    prompt        -> still.png          (image model)
+  animate  still.png     -> render.mp4         (Kling, costs money)
+  matte    render.mp4    -> master/*.png       (local CPU, slow, free)
+  encode   master/*.png  -> icon.webp          (local, instant)
+  verify   anything      -> a report you can act on
+  run      all of the above
+"""
+import argparse
+import os
+import sys
+
+from . import config, encode, kling, matte, providers, verify
+
+STILL_RULES = (
+    "Centred on a fully transparent background, nothing else in frame. "
+    "Soft studio lighting from the upper left, a gentle contact shadow beneath. "
+    "No text, no watermark, no border, no ground plane."
+)
+
+
+def _out(args, *parts):
+    os.makedirs(args.out, exist_ok=True)
+    return os.path.join(args.out, *parts)
+
+
+def cmd_still(args):
+    prompt = args.prompt if args.raw else f"{args.prompt.strip().rstrip('.')}. {STILL_RULES}"
+    n = args.variants
+    picked = []
+    for i in range(n):
+        p = _out(args, f"still_{i + 1}.png" if n > 1 else "still.png")
+        model = providers.generate(prompt, p, backend=args.backend)
+        print(f"  {p}  ({model})")
+        picked.append(p)
+    if n > 1:
+        print(f"\n{n} variants written. Pick one, rename it to still.png, then:"
+              f"\n  python -m iconloop animate --out {args.out} --motion \"...\"")
+    return picked
+
+
+def cmd_animate(args):
+    still = args.still or _out(args, "still.png")
+    if not os.path.isfile(still):
+        sys.exit(f"No still at {still} — run `still` first, or pass --still.")
+    sent = _out(args, "sent_to_kling.png")
+    kling.composite(still, sent)
+    print(f"  composited onto backing {kling.BACKING} -> {sent}")
+    model, version = kling.animate(sent, args.motion, _out(args, "render.mp4"),
+                                   duration=args.duration)
+    print(f"  model: {model}\n  version: {version}")
+
+
+def cmd_matte(args):
+    video = args.video or _out(args, "render.mp4")
+    frames = matte.extract(video, _out(args, "src"), size=args.extract)
+    print(f"  {len(frames)} source frames")
+    A, C = matte.matte(frames, model=args.model)
+    master = matte.normalize_framing(A, C, _out(args, "master"), master=args.master)
+    print(f"  {len(master)} master frames at {args.master}px -> {_out(args, 'master')}")
+
+
+def cmd_encode(args):
+    master_dir = _out(args, "master")
+    frames = encode.load(master_dir)
+    if not frames:
+        sys.exit(f"No master frames in {master_dir} — run `matte` first.")
+    src_fps = args.source_fps
+
+    if args.sweep:
+        encode.sweep(frames, src_fps, quality=args.quality)
+        print("Pick one, then re-run without --sweep, e.g.:"
+              f"\n  python -m iconloop encode --out {args.out} --size 288 --fps {src_fps}\n")
+        return
+
+    fps = args.fps or src_fps
+    n = len(frames) if abs(fps - src_fps) < 0.01 else max(2, round(len(frames) * fps / src_fps))
+    if fps < src_fps:
+        print(f"  ! {fps}fps from a {src_fps}fps source: dropping "
+              f"{len(frames) - n} of {len(frames)} frames. This is the usual cause "
+              f"of judder — encode at the source rate first and compare.")
+    out = args.name or "icon"
+    p = _out(args, f"{out}.webp")
+    b = encode.webp(frames, p, fps, size=args.size, quality=args.quality, n=n)
+    print(f"  {p}  {b/1024:.0f} KB  ({n} frames @ {fps}fps, {args.size}px)")
+    if args.webm:
+        b = encode.webm(master_dir, _out(args, f"{out}.webm"), fps, size=args.size)
+        print(f"  {_out(args, out + '.webm')}  {b/1024:.0f} KB (VP9 + alpha)")
+    if args.mp4:
+        b = encode.mp4_flat(master_dir, _out(args, f"{out}.mp4"), fps, size=args.size, bg=args.mp4_bg)
+        print(f"  {_out(args, out + '.mp4')}  {b/1024:.0f} KB (H.264, flattened on {args.mp4_bg})")
+
+
+def cmd_verify(args):
+    master_dir = _out(args, "master")
+    ok = True
+    if os.path.isdir(master_dir) and os.listdir(master_dir):
+        r = verify.motion_report(master_dir)
+        verify.print_report("motion", r); ok &= r["ok"]
+        r = verify.loop_report(master_dir)
+        verify.print_report("loop seam", r); ok &= r["ok"]
+        sheet = verify.contact_sheet(master_dir, _out(args, "contact_sheet.png"))
+        print(f"  [--] contact sheet -> {sheet}  (look at it; light row and dark row)")
+    for w in sorted(f for f in os.listdir(args.out) if f.endswith(".webp")) if os.path.isdir(args.out) else []:
+        r = verify.webp_report(os.path.join(args.out, w))
+        verify.print_report(w, r); ok &= r["ok"]
+    if not ok:
+        sys.exit(1)
+
+
+def cmd_run(args):
+    cmd_still(args)
+    cmd_animate(args)
+    cmd_matte(args)
+    args.sweep = False
+    cmd_encode(args)
+    cmd_verify(args)
+
+
+def main():
+    config.load_dotenv()
+    config.require_tool("ffmpeg", "install it (it does the frame and video work).")
+
+    p = argparse.ArgumentParser(prog="iconloop", description=__doc__,
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--out", default="out", help="working directory (default: out)")
+    sub = p.add_subparsers(dest="cmd", required=True)
+
+    def add_still(s):
+        s.add_argument("--prompt", required=True, help="what the object is")
+        s.add_argument("--backend", choices=("openai", "gemini", "openrouter"),
+                       default=config.opt("ICONLOOP_IMAGE_BACKEND", "openai"))
+        s.add_argument("--variants", type=int, default=1, help="generate N to choose from")
+        s.add_argument("--raw", action="store_true", help="send the prompt verbatim")
+
+    def add_animate(s):
+        s.add_argument("--motion", required=True, help="how it should move")
+        s.add_argument("--still", help="override the still to animate")
+        s.add_argument("--duration", type=int, default=5)
+
+    def add_matte(s):
+        s.add_argument("--video", help="override the clip to matte")
+        s.add_argument("--model", default=matte.DEFAULT_MODEL)
+        s.add_argument("--extract", type=int, default=640, help="matting resolution")
+        s.add_argument("--master", type=int, default=384, help="master frame size")
+
+    def add_encode(s):
+        s.add_argument("--source-fps", type=float, default=24.0)
+        s.add_argument("--fps", type=float, help="defaults to the source rate")
+        s.add_argument("--size", type=int, default=288)
+        s.add_argument("--quality", type=int, default=50)
+        s.add_argument("--name", help="output basename")
+        s.add_argument("--sweep", action="store_true", help="print size vs fps and stop")
+        s.add_argument("--webm", action="store_true", help="also write VP9+alpha")
+        s.add_argument("--mp4", action="store_true", help="also write flattened H.264")
+        s.add_argument("--mp4-bg", default="0xFFFFFF")
+
+    s = sub.add_parser("still"); add_still(s); s.set_defaults(fn=cmd_still)
+    s = sub.add_parser("animate"); add_animate(s); s.set_defaults(fn=cmd_animate)
+    s = sub.add_parser("matte"); add_matte(s); s.set_defaults(fn=cmd_matte)
+    s = sub.add_parser("encode"); add_encode(s); s.set_defaults(fn=cmd_encode)
+    s = sub.add_parser("verify"); s.set_defaults(fn=cmd_verify)
+    s = sub.add_parser("run")
+    add_still(s); add_animate(s); add_matte(s); add_encode(s); s.set_defaults(fn=cmd_run)
+
+    args = p.parse_args()
+    args.fn(args)
+
+
+if __name__ == "__main__":
+    main()
