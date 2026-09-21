@@ -1,4 +1,4 @@
-# icon-loop
+# animated-3d-icon
 
 Turn a prompt into a looping animated icon with **real transparency**.
 

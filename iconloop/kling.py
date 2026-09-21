@@ -33,9 +33,15 @@ LOOP_RULES = (
     "does — never a generic animation applied to it. "
     "The camera is locked off and must not move, pan, zoom or push in. "
     "The background stays flat, empty and completely static. "
-    "No new objects, hands, text, captions or effects enter the frame. "
-    "It stays the same object in the same colours throughout — the material, "
-    "palette and identity do not change, only the form."
+    "Nothing enters the frame from outside it — no hands, no text, no captions, "
+    "no watermarks, no props. "
+    # Deliberately narrower than it used to be. This clause once banned "new
+    # objects or effects" outright, which also banned anything the object
+    # itself produced — and for an object that does not move on its own, that
+    # emission is the entire animation. Constrain where things come FROM, not
+    # whether the object may produce them.
+    "It stays the same object in the same material and palette throughout — its "
+    "identity, colours and finish do not change."
 )
 
 

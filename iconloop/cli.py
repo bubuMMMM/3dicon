@@ -51,7 +51,7 @@ def cmd_animate(args):
     sent = _out(args, "sent_to_kling.png")
     kling.composite(still, sent)
     print(f"  composited onto backing {kling.BACKING} -> {sent}")
-    clause = motionlib.compose(args.motion, args.preset, args.feel)
+    clause = motionlib.compose(args.motion, args.preset, args.feel, args.strategy, args.emit)
     print(f"  motion: {clause[:110]}...")
     model, version = kling.animate(sent, clause, _out(args, "render.mp4"),
                                    duration=args.duration)
@@ -116,12 +116,22 @@ def cmd_verify(args):
 
 
 def cmd_run(args):
+    """Generate the still and STOP.
+
+    Deliberately not a one-shot pipeline. Everything after the still costs
+    money and four minutes, and animating art you have not looked at is how
+    you pay twice. One still, one look, one decision.
+    """
     cmd_still(args)
-    cmd_animate(args)
-    cmd_matte(args)
-    args.sweep = False
-    cmd_encode(args)
-    cmd_verify(args)
+    print(f"""
+  Stop here and look at {args.out}/still.png.
+
+  Is this the right object, colour and weight? Everything downstream inherits
+  it, and a re-roll of the still is $0.13 against $0.48 for the full run.
+
+    happy      -> python -m iconloop --out {args.out} animate --preset <name>
+    not happy  -> python -m iconloop --out {args.out} still --prompt "..."
+""")
 
 
 def main():
@@ -142,8 +152,13 @@ def main():
 
     def add_animate(s):
         s.add_argument("--motion", help="extra motion detail, in physical language")
+        s.add_argument("--strategy", choices=sorted(motionlib.STRATEGIES),
+                       help="native (moves by itself) | event (does its job once) "
+                            "| part (one piece moves) | surface (light travels)")
+        s.add_argument("--emit", action="store_true",
+                       help="let the object briefly produce sparks, fragments, droplets")
         s.add_argument("--preset", choices=sorted(motionlib.ARCHETYPES),
-                       help="what this object naturally does")
+                       help="optional shortcut for a common object")
         # not --quality: encode already owns that for WebP compression.
         s.add_argument("--feel", choices=sorted(motionlib.QUALITY),
                        help="how the motion should feel")
@@ -172,8 +187,8 @@ def main():
     s = sub.add_parser("matte"); add_matte(s); s.set_defaults(fn=cmd_matte)
     s = sub.add_parser("encode"); add_encode(s); s.set_defaults(fn=cmd_encode)
     s = sub.add_parser("verify"); s.set_defaults(fn=cmd_verify)
-    s = sub.add_parser("run")
-    add_still(s); add_animate(s); add_matte(s); add_encode(s); s.set_defaults(fn=cmd_run)
+    s = sub.add_parser("run", help="generate the still, then stop for approval")
+    add_still(s); s.set_defaults(fn=cmd_run)
 
     args = p.parse_args()
     args.fn(args)

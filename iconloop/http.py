@@ -44,7 +44,7 @@ def post_multipart(url, fields, files, headers=None, timeout=300, retries=3):
 # urllib's default User-Agent ("Python-urllib/3.x") is blocked outright by
 # Cloudflare in front of Replicate — it returns 403 with error code 1010, which
 # looks exactly like a bad token and is not. Send a real one.
-UA = "icon-loop/0.1 (+https://github.com/samyost/icon-loop)"
+UA = "icon-loop/0.1 (+https://github.com/samyost/animated-3d-icon)"
 
 
 def _send(url, body, headers, method, timeout, retries):

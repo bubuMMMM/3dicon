@@ -22,9 +22,71 @@ keeping — they just cannot substitute for knowing what the object does.
 # Applied to every preset. These are the defaults a model reaches for, and they
 # are wrong for almost every icon.
 BANNED = (
-    "It must not bob, bounce, wobble, jitter, sway, drift, spin as a whole, "
-    "rock side to side, or float around the frame. The object as a whole stays "
-    "exactly where it is."
+    "The object as a whole never moves: it must not bob, bounce, wobble, "
+    "jitter, sway, drift, rock, slide or float anywhere in the frame, and it "
+    "must never rotate, turn, spin or orbit as a whole — no turntable, no "
+    "revolve, no tumbling. Its position and its facing are fixed for the whole "
+    "clip. Any motion happens within or upon the object, not to it."
+)
+
+# Objects differ in whether they move at all, and that decides the whole shape
+# of the animation. Naming presets one object at a time does not scale and
+# never covers the next request, so pick a STRATEGY instead: four of them
+# cover essentially everything, and the choice follows from one question —
+# what, if anything, does this thing do when left alone?
+#
+# Getting this wrong is what produces the two classic failures. Ask an inert
+# object to "move naturally" and you get a turntable spin or a gentle bob,
+# because it has no natural motion and the model falls back on the generic.
+# Ask a living or flowing thing to perform a discrete event and you get a
+# stiff, mechanical beat where continuous motion belonged.
+STRATEGIES = {
+    "native": (
+        "This object moves of its own accord, so animate what it physically "
+        "does: the forces acting on it, the way its material behaves, the "
+        "rhythm it naturally has. The motion is continuous and never resolves "
+        "into a single mechanical cycle"
+    ),
+    "event": (
+        "This object does not move on its own, so it performs its function "
+        "once: a single clear action with a beginning, a peak and a return to "
+        "rest, followed by a pause before it happens again. The action is fast "
+        "and decisive and occupies only a short part of the clip — the rest is "
+        "the object at rest, which is what makes the action read"
+    ),
+    "part": (
+        "The body of the object is an anchor and stays completely still. Only "
+        "one small part of it moves — the part that would move first if the "
+        "object were disturbed, or the part that is loose, hinged or light. "
+        "The moving part is a small fraction of the whole"
+    ),
+    "surface": (
+        "The object's form does not change at all and nothing about it moves. "
+        "What changes travels across its surface: light, a highlight, a sheen, "
+        "a colour or a material state moving over a shape that stays put"
+    ),
+}
+
+# Permission, not instruction. Emitted elements are the difference between an
+# inert object being interesting and being furniture, but they are also the
+# thing a video model is most eager to overdo, so this stays opt-in and the
+# constraints on it are tight.
+EMIT = (
+    "The object may briefly produce small elements of its own — a fragment, a "
+    "droplet, a spark, a puff, a glint. Anything it produces is much smaller "
+    "than the object, lasts only a few frames, and fades or leaves the frame "
+    "completely rather than accumulating. Nothing ever enters from outside"
+)
+
+# What the object may also do is TEMPORARILY LOSE PART OF ITSELF and get it
+# back before the loop closes — a piece removed, a section opened, a state
+# changed and restored. This is worth saying explicitly because "keep the same
+# identity" otherwise reads as "never change", and an object that can never be
+# altered can only ever bob.
+TRANSIENT = (
+    "A change to the object itself is allowed during the action — part of it "
+    "may be removed, opened, split, filled or emptied — provided it returns to "
+    "exactly its opening state by the end so the loop closes seamlessly"
 )
 
 ARCHETYPES = {
@@ -76,6 +138,15 @@ ARCHETYPES = {
                 "indicator pulses as it rises, then resets",
         anchor="the casing is rigid and completely still",
     ),
+    "camera": dict(
+        physics="it takes a photo: the shutter button presses down and springs "
+                "back, the lens iris blinks shut and open, and the flash fires a "
+                "bright burst of light out of the lens with small sparkles "
+                "flicking outward and fading; then it rests before firing again",
+        anchor="the camera body is rigid and completely still — only the button, "
+               "the iris and the light change",
+        accent=True,
+    ),
     "cloud": dict(
         physics="it churns: the puffs roll and fold into one another slowly, the "
                 "silhouette breathing in and out at its edges",
@@ -91,19 +162,27 @@ QUALITY = {
 }
 
 
-def compose(motion=None, preset=None, quality=None):
-    """Build the motion clause: what it does, what stays put, how it feels."""
+def compose(motion=None, preset=None, quality=None, strategy=None, emit=False):
+    """Build the motion clause: strategy, what it does, what stays put, feel."""
     parts = []
+    if strategy:
+        parts.append(STRATEGIES[strategy])
+        if strategy in ("event", "part"):
+            parts.append(TRANSIENT)
+    if emit:
+        parts.append(EMIT)
     if preset:
         a = ARCHETYPES[preset]
         parts.append(a["physics"])
         parts.append(a["anchor"])
+        if a.get("accent"):
+            parts.append(ACCENT)
     if motion:
         parts.append(motion.strip().rstrip("."))
     if quality:
         parts.append(QUALITY[quality])
     if not parts:
-        raise SystemExit("Give --motion, --preset, or both.")
+        raise SystemExit("Give --strategy, --motion or --preset.")
     parts.append(BANNED.rstrip("."))
     return ". ".join(p.strip().rstrip(".") for p in parts) + "."
 
