@@ -23,14 +23,19 @@ API = "https://api.replicate.com/v1"
 # spill it does leave is colourless rather than a green or magenta fringe.
 BACKING = (158, 158, 158)
 
+# Every clause here is load-bearing, and one earlier version of this string
+# silently killed the animation: it said "the object keeps its exact shape and
+# proportions throughout", which reads as an instruction to stay still. Kling
+# obeyed, and returned 122 frames of the input image. Constrain the CAMERA and
+# the SCENE as hard as you like; never constrain the object's shape.
 LOOP_RULES = (
+    "The motion must be clearly visible and true to what this object really "
+    "does — never a generic animation applied to it. "
     "The camera is locked off and must not move, pan, zoom or push in. "
-    "The background is flat and completely static. "
-    "No new objects, hands, text or effects enter the frame at any point. "
-    "The object keeps its exact shape, colour and proportions throughout. "
-    "The motion is continuous and evenly paced from the first frame to the "
-    "last — it must not ease to a stop, hold still, or pause at the extremes "
-    "of its travel."
+    "The background stays flat, empty and completely static. "
+    "No new objects, hands, text, captions or effects enter the frame. "
+    "It stays the same object in the same colours throughout — the material, "
+    "palette and identity do not change, only the form."
 )
 
 

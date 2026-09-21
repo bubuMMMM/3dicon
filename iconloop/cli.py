@@ -15,7 +15,7 @@ import argparse
 import os
 import sys
 
-from . import config, encode, kling, matte, providers, verify
+from . import config, encode, kling, matte, motion as motionlib, providers, verify
 
 STILL_RULES = (
     "Centred on a fully transparent background, nothing else in frame. "
@@ -51,7 +51,9 @@ def cmd_animate(args):
     sent = _out(args, "sent_to_kling.png")
     kling.composite(still, sent)
     print(f"  composited onto backing {kling.BACKING} -> {sent}")
-    model, version = kling.animate(sent, args.motion, _out(args, "render.mp4"),
+    clause = motionlib.compose(args.motion, args.preset, args.feel)
+    print(f"  motion: {clause[:110]}...")
+    model, version = kling.animate(sent, clause, _out(args, "render.mp4"),
                                    duration=args.duration)
     print(f"  model: {model}\n  version: {version}")
 
@@ -139,7 +141,12 @@ def main():
         s.add_argument("--raw", action="store_true", help="send the prompt verbatim")
 
     def add_animate(s):
-        s.add_argument("--motion", required=True, help="how it should move")
+        s.add_argument("--motion", help="extra motion detail, in physical language")
+        s.add_argument("--preset", choices=sorted(motionlib.ARCHETYPES),
+                       help="what this object naturally does")
+        # not --quality: encode already owns that for WebP compression.
+        s.add_argument("--feel", choices=sorted(motionlib.QUALITY),
+                       help="how the motion should feel")
         s.add_argument("--still", help="override the still to animate")
         s.add_argument("--duration", type=int, default=5)
 

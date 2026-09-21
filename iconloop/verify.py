@@ -24,7 +24,7 @@ def _frames(master_dir):
             for p in sorted(glob.glob(f"{master_dir}/*.png"))]
 
 
-def motion_report(master_dir, min_moving_fraction=0.4):
+def motion_report(master_dir, min_moving_fraction=0.4, min_mean_step=1.0):
     """Did the model actually animate anything? Measured inside the object only."""
     fs = _frames(master_dir)
     st = np.stack(fs)
@@ -32,14 +32,20 @@ def motion_report(master_dir, min_moving_fraction=0.4):
     steps = np.array([np.abs(fs[i][..., :3][obj] - fs[i - 1][..., :3][obj]).mean()
                       for i in range(1, len(fs))])
     moving = int((steps > steps.mean() * 0.2).sum())
-    ok = len(steps) and moving / len(steps) >= min_moving_fraction
+    # An absolute floor as well as a relative one. The relative test alone is
+    # blind to a dead render: if nothing moves, every step still clears 20% of
+    # a near-zero mean and it reports 121/121 frames "moving". A real loop runs
+    # a mean step of several units; a static one sits near 0.2.
+    ok = (len(steps) and moving / len(steps) >= min_moving_fraction
+          and steps.mean() >= min_mean_step)
     return {
         "frames": len(fs), "mean_step": float(steps.mean()), "max_step": float(steps.max()),
         "min_step": float(steps.min()), "moving_frames": moving, "total_steps": len(steps),
         "ok": bool(ok),
         "note": "" if ok else
-                "Too many near-identical frames — the render is largely static. "
-                "Re-prompt for continuous motion rather than encoding this.",
+                "The render is largely static — re-prompt rather than encoding it. "
+                "If mean_step is near zero the model returned the input image: "
+                "check the prompt does not ask the object to hold its shape.",
     }
 
 
