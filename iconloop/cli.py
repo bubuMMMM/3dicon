@@ -52,7 +52,7 @@ def cmd_animate(args):
     kling.composite(still, sent)
     print(f"  composited onto backing {kling.BACKING} -> {sent}")
     clause = motionlib.compose(args.motion, args.preset, args.feel, args.strategy, args.emit)
-    print(f"  motion: {clause[:110]}...")
+    print(f"  motion: {clause[:70]}...")
     model, version = kling.animate(sent, clause, _out(args, "render.mp4"),
                                    duration=args.duration)
     print(f"  model: {model}\n  version: {version}")
@@ -107,7 +107,7 @@ def cmd_verify(args):
         r = verify.loop_report(master_dir)
         verify.print_report("loop seam", r); ok &= r["ok"]
         sheet = verify.contact_sheet(master_dir, _out(args, "contact_sheet.png"))
-        print(f"  [--] contact sheet -> {sheet}  (look at it; light row and dark row)")
+        print(f"  --    sheet      {sheet}")
     for w in sorted(f for f in os.listdir(args.out) if f.endswith(".webp")) if os.path.isdir(args.out) else []:
         r = verify.webp_report(os.path.join(args.out, w))
         verify.print_report(w, r); ok &= r["ok"]
@@ -123,15 +123,8 @@ def cmd_run(args):
     you pay twice. One still, one look, one decision.
     """
     cmd_still(args)
-    print(f"""
-  Stop here and look at {args.out}/still.png.
-
-  Is this the right object, colour and weight? Everything downstream inherits
-  it, and a re-roll of the still is $0.13 against $0.48 for the full run.
-
-    happy      -> python -m iconloop --out {args.out} animate --preset <name>
-    not happy  -> python -m iconloop --out {args.out} still --prompt "..."
-""")
+    print(f"\n  Look at {args.out}/still.png before spending anything on motion.")
+    print(f"  next: python -m iconloop --out {args.out} animate --strategy <name>\n")
 
 
 def main():

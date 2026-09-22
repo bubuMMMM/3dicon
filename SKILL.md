@@ -38,6 +38,35 @@ If they are not happy, adjust the prompt and generate one replacement — not a
 grid of options. Variants exist behind `--variants` but are off by default and
 should stay that way unless the user asks to compare.
 
+## How to report back
+
+Keep the chat almost empty. The user is looking at an image, not reading a
+report — everything they need is either in the picture or in one line under it.
+
+**After the still**, say only this, then stop and wait:
+
+> **Still ready.**
+> *(show the image)*
+> Happy with it, or change something?
+
+Do not explain the prompt, list what you did, or describe the image back to
+them. They can see it.
+
+**After the animation**, one line of numbers and the file:
+
+> **Done** — `flame.webp` · 857 KB · 122f @ 24fps
+> *(show the contact sheet)*
+
+**If `verify` fails**, one line on what failed and one on what you propose:
+
+> **Motion too weak** — step 0.9, needs 1.0.
+> Retry as `event` with `--emit`?
+
+**Never** paste raw CLI output, stage-by-stage progress, the composed motion
+prompt, or a summary of the pipeline. If a stage succeeds, its output is the
+file — say the filename and move on. Save the detail for when something breaks
+and the user has to choose what to do next.
+
 ## The pipeline
 
 ```bash

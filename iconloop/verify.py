@@ -98,12 +98,26 @@ def contact_sheet(master_dir, out_path, light=(251, 250, 244), dark=(38, 48, 31)
     return out_path
 
 
+# One line per check. The full numbers are still returned by each report for
+# anything that wants them; dumping them all to stdout buried the one line that
+# mattered, and a pass needs no evidence — only a failure does.
+KEY_FIELDS = {
+    "motion": ("frames", "mean_step"),
+    "loop seam": ("seam", "mean_step"),
+}
+
+
 def print_report(title, r):
-    flag = "ok" if r.get("ok") else "FAIL"
-    print(f"  [{flag}] {title}")
+    if r.get("ok"):
+        fields = KEY_FIELDS.get(title, ("frames", "bytes"))
+        bits = [f"{k} {r[k]:.2f}" if isinstance(r.get(k), float) else f"{k} {r[k]}"
+                for k in fields if k in r]
+        print(f"  ok    {title:10s} {' · '.join(bits)}")
+        return
+    print(f"  FAIL  {title}")
     for k, v in r.items():
         if k in ("ok", "note"):
             continue
-        print(f"        {k}: {v:.3f}" if isinstance(v, float) else f"        {k}: {v}")
+        print(f"          {k}: {v:.3f}" if isinstance(v, float) else f"          {k}: {v}")
     if r.get("note"):
-        print(f"        ! {r['note']}")
+        print(f"          {r['note']}")
