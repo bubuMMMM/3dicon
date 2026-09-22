@@ -62,9 +62,11 @@ STRATEGIES = {
         "tension, never because the body carries it"
     ),
     "surface": (
-        "The object's form does not change at all and nothing about it moves. "
-        "What changes travels across its surface: light, a highlight, a sheen, "
-        "a colour or a material state moving over a shape that stays put"
+        "The object's outline does not change and the object itself does not "
+        "move. Everything happens on or just under its surface: light, a "
+        "highlight or a sheen travelling across it; a colour or material state "
+        "spreading through it; and small local features forming, swelling and "
+        "resolving in place — the surface is alive while the shape is still"
     ),
 }
 
@@ -83,6 +85,36 @@ CAUSE = (
     "by the object being moved, show the effect alone and keep the object "
     "completely stationary — gravity, heat, air, tension and its own internal "
     "forces are enough."
+)
+
+# Two general moves that make almost any icon read as alive, and that no
+# strategy gets to skip.
+#
+# The first is scale. A single large motion of the whole object is the obvious
+# thing to reach for and the worst of the options: it risks the frame edge, it
+# looks generic, and it carries no information about what the object is. Many
+# small motions distributed over the object's own details cost nothing, cannot
+# leave the frame, and are specific to that object by construction.
+#
+# The second is phase. Anything an object has several of will, left alone, be
+# animated in unison, and unison is the single loudest tell that something was
+# animated rather than observed. Real repeated things drift out of step.
+DETAIL = (
+    "Favour many small motions in the object's own details over one large "
+    "motion of the whole. Small features may form, swell, travel a short "
+    "distance and resolve in place. Where the object has several of the same "
+    "element, each one moves independently and slightly out of step with the "
+    "others — never together, never in a single synchronised beat."
+)
+
+# The containment rule stated as physics rather than as a boundary. A boundary
+# is a constraint the model can violate without noticing; a round trip is a
+# property of the motion itself, and it is also exactly what a seamless loop
+# needs, so it costs nothing to ask for.
+RETURN = (
+    "Anything that extends, rises, spreads or is thrown off also comes back: "
+    "it retracts, settles, is reabsorbed, or fades out entirely. No part of the "
+    "motion travels in one direction and keeps going."
 )
 
 # Permission, not instruction. Emitted elements are the difference between an
@@ -201,6 +233,8 @@ def compose(motion=None, preset=None, quality=None, strategy=None, emit=False):
         parts.append(QUALITY[quality])
     if not parts:
         raise SystemExit("Give --strategy, --motion or --preset.")
+    parts.append(DETAIL.rstrip("."))
+    parts.append(RETURN.rstrip("."))
     parts.append(BANNED.rstrip("."))
     parts.append(CAUSE.rstrip("."))
     return ". ".join(p.strip().rstrip(".") for p in parts) + "."

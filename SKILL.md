@@ -108,6 +108,19 @@ something removed, opened, split, filled — as long as it returns to its
 opening state so the loop closes. Without that permission an object can only
 ever jiggle.
 
+**Small and many beats large and one.** A single big motion of the whole object
+is the obvious choice and the worst one: it risks the frame edge, it reads as
+generic, and it says nothing about what the object is. Motion distributed over
+the object's own details cannot leave the frame and is specific to that object
+by construction. Where it has several of the same element, they must move out
+of step with each other — unison is the loudest tell that something was
+animated rather than observed.
+
+**Everything that goes out comes back.** Anything that extends, rises, spreads
+or is thrown off must retract, settle, be reabsorbed or fade. Stated as physics
+rather than as a boundary, because a boundary is something the model can cross
+without noticing — and a round trip is what the seamless loop needs anyway.
+
 **Animate the effect, not its cause.** The commonest way a good result still
 comes out wrong: the model reaches for whatever would normally *cause* the
 motion, and that cause is usually the object being moved by something. The
