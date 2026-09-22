@@ -91,6 +91,18 @@ def resolve_version(model=None):
 
 OR_API = "https://openrouter.ai/api/v1/videos"
 
+# Seedance rather than Kling 3.0, for a boring reason that cost a run to find:
+# Kling's API caps the prompt at 2500 characters and the composed motion clause
+# runs past 3000. It rejects the request outright (ret:1201) rather than
+# truncating, so the better model is simply unusable here until the prompt is
+# shorter. Seedance takes the whole thing, supports the first/last frame loop,
+# and produced the better result anyway.
+DEFAULT_VIDEO_MODEL = "bytedance/seedance-2.0"
+
+# Models known to reject long prompts, with their limit.
+PROMPT_LIMITS = {"kwaivgi/kling-v3.0-pro": 2500, "kwaivgi/kling-v3.0-std": 2500,
+                 "kwaivgi/kling-video-o1": 2500}
+
 
 def animate_openrouter(image_path, motion_prompt, out_path, duration=5,
                        model=None, poll=10):
@@ -103,11 +115,18 @@ def animate_openrouter(image_path, motion_prompt, out_path, duration=5,
     """
     import base64
     k = config.key("OPENROUTER_API_KEY", "run image-to-video via OpenRouter")
-    model = model or config.opt("ICONLOOP_VIDEO_MODEL", "kwaivgi/kling-v3.0-pro")
+    model = model or config.opt("ICONLOOP_VIDEO_MODEL", DEFAULT_VIDEO_MODEL)
     data_uri = "data:image/png;base64," + base64.b64encode(open(image_path, "rb").read()).decode()
     frame = lambda t: {"type": "image_url", "image_url": {"url": data_uri}, "frame_type": t}
 
     prompt = f"{motion_prompt.strip().rstrip('.')}. {LOOP_RULES}"
+    cap = PROMPT_LIMITS.get(model)
+    if cap and len(prompt) > cap:
+        raise SystemExit(
+            f"\n{model} caps prompts at {cap} characters and this one is "
+            f"{len(prompt)}.\nIt will reject the request rather than truncate. "
+            f"Use --model {DEFAULT_VIDEO_MODEL} (no cap, same first/last-frame "
+            f"loop), or shorten the motion clause.\n")
     job = http.post_json(OR_API, {
         "model": model,
         "prompt": prompt,

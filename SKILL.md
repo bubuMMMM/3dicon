@@ -1,6 +1,6 @@
 ---
 name: animated-3d-icon
-description: Turn a prompt or a still image into a looping animated icon with real transparency — GPT Image / Nano Banana for the art, Kling 3.0 via OpenRouter for the motion, exact-unpremultiply matting for the alpha, animated WebP out. Use when asked to animate an app icon, make a 3D icon loop, produce a transparent animated asset, or add motion to flat icon art.
+description: Turn a prompt or a still image into a looping animated icon with real transparency — GPT Image / Nano Banana for the art, Seedance via OpenRouter for the motion, exact-unpremultiply matting for the alpha, animated WebP out. Use when asked to animate an app icon, make a 3D icon loop, produce a transparent animated asset, or add motion to flat icon art.
 ---
 
 # animated-3d-icon
@@ -195,9 +195,11 @@ that most want animating are the ones a low frame rate hurts most.
 return to its opening pose and the loop close. It is handled for you in
 `kling.py` on both backends; do not remove it and try to cross-fade instead.
 
-**Motion runs through OpenRouter on Kling 3.0 by default.** `--model` picks a
-different one — Seedance 2.5, Veo 3.1, Hailuo 3 and Wan 2.7 all accept a first
-and last frame. `--via replicate` is the fallback and stops at Kling 2.5.
+**Motion runs through OpenRouter on Seedance 2.0 by default.** `--model` picks
+another — Seedance 2.5, Veo 3.1, Hailuo 3 and Wan 2.7 all accept a first and
+last frame. Not Kling 3.0: it caps prompts at 2500 characters and the composed
+motion clause is longer, so it rejects the request outright. `--via replicate`
+is the fallback and stops at Kling 2.5.
 
 **The backing colour is load-bearing.** The still is flattened onto a known
 mid-grey before it is sent. Because the colour is known exactly, the matte
