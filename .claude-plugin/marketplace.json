@@ -1,0 +1,21 @@
+{
+  "name": "animated-3d-icon",
+  "owner": {
+    "name": "Sam Yost"
+  },
+  "metadata": {
+    "description": "Turn a prompt into a looping animated 3D icon with real transparency",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "animated-3d-icon",
+      "description": "Generate a 3D icon, animate it into a seamless loop, key the background out with an exact unpremultiply, and encode it as an animated WebP with true soft alpha",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/animated-3d-icon"
+      ]
+    }
+  ]
+}

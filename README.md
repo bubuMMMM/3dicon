@@ -1,67 +1,112 @@
 # animated-3d-icon
 
-Turn a prompt into a looping animated icon with **real transparency**.
+A Claude Code skill that turns a prompt into a **looping animated 3D icon with
+real transparency** — an animated WebP you can drop straight into an app.
 
 <p align="center">
-  <img src="examples/timer/contact_sheet.png" width="560" alt="the same loop on a light and a dark background">
+  <img src="skills/animated-3d-icon/examples/duck-loop.png" width="620" alt="the same loop composited on a light and a dark background">
 </p>
 
-GPT Image, Nano Banana or OpenRouter for the art → Kling 3.0 via OpenRouter
-for the motion → exact-unpremultiply matting for the alpha → animated WebP out.
-
-No Lottie conversion. A "video to Lottie" tool just embeds the same raster
-frames as base64 inside a JSON, which is bigger than the WebP and buys nothing —
-Lottie's advantage is vector, and a glossy 3D render will not vectorise.
+No Lottie conversion, no new native dependency. `expo-image`, Chrome and Safari
+all render animated WebP with alpha natively.
 
 ## Install
 
-```bash
-pip install -r requirements.txt
-cp .env.example .env     # fill in the backend you want
+```
+/plugin marketplace add samyost/animated-3d-icon
+/plugin install animated-3d-icon
 ```
 
-Needs `ffmpeg` on PATH. Matting downloads a ~180MB model on first run.
+Or clone it and symlink the skill:
+
+```bash
+git clone https://github.com/samyost/animated-3d-icon
+ln -s "$PWD/animated-3d-icon/skills/animated-3d-icon" ~/.claude/skills/
+```
+
+Then:
+
+```bash
+cd skills/animated-3d-icon
+pip install -r requirements.txt
+cp .env.example .env          # one OpenRouter key covers the whole pipeline
+```
+
+`ffmpeg` must be on PATH. The first run downloads a ~180MB matting model.
 
 ## Use
 
+Ask for it in plain words:
+
+> make an animated 3d fire icon
+
+It generates one still, shows it, and waits for you to approve it before
+spending anything on motion. Then it proposes the motion and waits again.
+
+Under the hood:
+
 ```bash
 python -m iconloop --out out still   --prompt "a 3D stopwatch, sage green and cream"
-python -m iconloop --out out animate --motion "rocks gently, hand sweeping clockwise"
+python -m iconloop --out out animate --strategy native --energy lively
 python -m iconloop --out out matte
-python -m iconloop --out out encode --sweep      # see what each frame rate costs
+python -m iconloop --out out encode --sweep      # what each frame rate costs
 python -m iconloop --out out encode --size 288 --name timer
 python -m iconloop --out out verify
 ```
 
-Stages are separate because each is a place to look before spending the next
-thing. `run` chains them if you want that.
+Roughly **$0.90 and four minutes** per icon.
 
-## Backends
+## How it works
 
-| backend | key | notes |
-|---|---|---|
-| `openai` | `OPENAI_API_KEY` | resolves the newest `gpt-image-*` on your account at runtime |
-| `gemini` | `GOOGLE_API_KEY` | Nano Banana image models |
-| `openrouter` | `OPENROUTER_API_KEY` | one key for both, via the unified Image API; set `ICONLOOP_IMAGE_MODEL` |
+| stage | what happens |
+|---|---|
+| `still` | GPT Image / Nano Banana / OpenRouter, newest model resolved at runtime |
+| `animate` | Seedance via OpenRouter, first frame **and last frame** |
+| `matte` | rembg for alpha, then an exact unpremultiply for the colour |
+| `encode` | animated WebP with soft alpha; WebM and MP4 optional |
+| `verify` | measures whether it actually moved, and whether the loop closes |
 
-Animation goes through OpenRouter on `kwaivgi/kling-v3.0-pro` by default;
-`--model` swaps it, `--via replicate` falls back to Kling 2.5.
+## Three ideas worth stealing
 
-## The three ideas worth stealing
+**1. The last frame is the first frame.** Give the video model your start image
+as its end image too and it returns to the opening pose, so the loop closes
+instead of ping-ponging. Measured on one icon: the seam is *smaller* than an
+average frame step.
 
-1. **`end_image` = the start image.** Kling returns to its opening pose, so the
-   loop closes instead of ping-ponging.
-2. **Composite onto a backing you chose.** Then solve
-   `C = (F − (1−a)·BG)/a` exactly instead of estimating the foreground. Edge
-   error 26.9 → 15.9 against ground truth.
-3. **Encode at the source frame rate.** Downsampling to hit a size target is
-   what makes these look broken. `--sweep` shows the real cost.
+**2. Composite onto a backing you chose.** The model cannot take alpha, so the
+still is flattened onto a known mid-grey. Because the colour is known exactly,
+matting solves `C = (F − (1−a)·BG)/a` for the true foreground instead of
+estimating it — edge error 26.9 → 15.9 against ground truth.
+
+**3. Encode at the source frame rate.** Sampling 24fps down to 8fps to hit a
+file-size target is the single easiest way to ruin one of these. It produces
+judder that looks like a bad render, bad matting or a bad player, and is none
+of those. `--sweep` prints what each rate actually costs.
+
+## Choosing the motion
+
+The one question that decides everything: **what does this object do when left
+alone?**
+
+| answer | `--strategy` |
+|---|---|
+| It moves by itself — flows, burns, beats | `native` |
+| Nothing. It is inert until used | `event` |
+| Nothing, but one part is loose or hinged | `part` |
+| Nothing, and it has no moving parts | `surface` |
+
+Most icons are inert. Asking an inert object to "move naturally" is what gets
+you a turntable spin.
+
+`--energy still | calm | lively | playful` decides how much the object itself
+moves. `--emit` lets it throw off a spark or a fragment.
 
 ## Limits
 
-The contact shadow does not survive matting, file size scales with frame count,
-transparent MP4 needs an x265 build most distros don't ship, and animated WebP
-can't honour reduced-motion. All measured in [docs/limitations.md](docs/limitations.md).
+The soft contact shadow does not survive matting, file size scales with frame
+count, transparent MP4 needs an x265 build most distros don't ship, and
+animated WebP can't honour reduced-motion. All measured, with numbers, in
+[docs/limitations.md](skills/animated-3d-icon/docs/limitations.md).
 
 ## Licence
 
