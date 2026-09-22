@@ -51,7 +51,8 @@ def cmd_animate(args):
     sent = _out(args, "sent_to_kling.png")
     kling.composite(still, sent)
     print(f"  composited onto backing {kling.BACKING} -> {sent}")
-    clause = motionlib.compose(args.motion, args.preset, args.feel, args.strategy, args.emit)
+    clause = motionlib.compose(args.motion, args.preset, args.feel, args.strategy,
+                              args.emit, args.energy)
     print(f"  motion: {clause[:70]}...")
     model, version = kling.animate(sent, clause, _out(args, "render.mp4"),
                                    duration=args.duration)
@@ -148,6 +149,9 @@ def main():
         s.add_argument("--strategy", choices=sorted(motionlib.STRATEGIES),
                        help="native (moves by itself) | event (does its job once) "
                             "| part (one piece moves) | surface (light travels)")
+        s.add_argument("--energy", choices=("still", "calm", "lively", "playful"),
+                       help="how much the object itself may move (default follows "
+                            "the strategy; lively is a good starting point)")
         s.add_argument("--emit", action="store_true",
                        help="let the object briefly produce sparks, fragments, droplets")
         s.add_argument("--preset", choices=sorted(motionlib.ARCHETYPES),

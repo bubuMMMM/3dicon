@@ -21,12 +21,54 @@ keeping — they just cannot substitute for knowing what the object does.
 
 # Applied to every preset. These are the defaults a model reaches for, and they
 # are wrong for almost every icon.
-BANNED = (
-    "The object as a whole never moves: it must not bob, bounce, wobble, "
-    "jitter, sway, drift, rock, slide or float anywhere in the frame, and it "
-    "must never rotate, turn, spin or orbit as a whole — no turntable, no "
-    "revolve, no tumbling. Its position and its facing are fixed for the whole "
-    "clip. Any motion happens within or upon the object, not to it."
+# An earlier version of this file banned all whole-object motion outright. It
+# was written to stop two real failures — a turntable spin, and a slow aimless
+# bob — and it stopped them by freezing everything. Measured on one run: the
+# object's centre moved 0.3px in 384 and its area changed 0.2%. Rigid, lifeless
+# and technically passing every check.
+#
+# The mistake was treating body motion as the problem. It never was. The
+# problem is body motion with no purpose: continuous, ambient, going nowhere.
+# Purposeful body motion — a squash, a recoil, a shake, an anticipation before
+# an action — is most of what makes animation feel alive, and forbidding it
+# throws away the entire vocabulary to avoid two specific abuses.
+#
+# So the body gets an energy budget instead of a ban, and only the two actual
+# abuses stay banned.
+ENERGY = {
+    "still": (
+        "The object itself holds completely still. Its outline, position and "
+        "facing do not change at all"
+    ),
+    "calm": (
+        "The object may shift a little as it acts — a slight lean, a settle, a "
+        "gentle breath of scale — staying within a few percent of its size and "
+        "always coming back to rest"
+    ),
+    "lively": (
+        "The object moves as part of what it is doing: it squashes and "
+        "stretches, tilts, recoils, shakes briefly, dips and springs back. "
+        "These movements are fast and decisive rather than constant, are a "
+        "modest fraction of its size, and each one resolves back to its resting "
+        "pose"
+    ),
+    "playful": (
+        "The object behaves like a character. It anticipates before it acts, "
+        "squashes and stretches generously, overshoots and wobbles to a stop, "
+        "and may hop or shake in place. The exaggeration is deliberate and can "
+        "be large, as long as it stays centred, stays well inside the frame, "
+        "and returns exactly to its resting pose"
+    ),
+}
+
+# Only the two abuses, stated precisely enough that energy cannot be read as
+# permission for them.
+NEVER = (
+    "It never rotates, turns, spins or orbits as a whole — no turntable, no "
+    "revolve, no tumbling — and its facing stays the same throughout. It never "
+    "drifts, floats or wanders: it is centred and at rest at both the first and "
+    "the last frame, and any displacement in between belongs to a brief "
+    "deliberate action, never to a constant ambient motion."
 )
 
 # Objects differ in whether they move at all, and that decides the whole shape
@@ -79,44 +121,13 @@ STRATEGIES = {
 #
 # So: the driving force acts on the object where it stands.
 CAUSE = (
-    "Whatever drives the motion acts on the object where it stands. Nothing "
-    "lifts, carries, tilts, pulls, drags, shakes or repositions it, and no "
-    "unseen hand or force displaces it. If the effect would normally be caused "
-    "by the object being moved, show the effect alone and keep the object "
-    "completely stationary — gravity, heat, air, tension and its own internal "
-    "forces are enough."
+    "Any movement the object makes is its own — its action, its recoil, its "
+    "weight, or a force already in the scene such as gravity or heat. Nothing "
+    "outside the frame moves it: no hand, no prop, no unseen mount, and it is "
+    "never carried, dragged or repositioned by something else. If an effect "
+    "would normally come from the object being handled, show the effect and let "
+    "the object produce it itself."
 )
-
-# Two general moves that make almost any icon read as alive, and that no
-# strategy gets to skip.
-#
-# The first is scale. A single large motion of the whole object is the obvious
-# thing to reach for and the worst of the options: it risks the frame edge, it
-# looks generic, and it carries no information about what the object is. Many
-# small motions distributed over the object's own details cost nothing, cannot
-# leave the frame, and are specific to that object by construction.
-#
-# The second is phase. Anything an object has several of will, left alone, be
-# animated in unison, and unison is the single loudest tell that something was
-# animated rather than observed. Real repeated things drift out of step.
-DETAIL = (
-    "Favour many small motions in the object's own details over one large "
-    "motion of the whole. Small features may form, swell, travel a short "
-    "distance and resolve in place. Where the object has several of the same "
-    "element, each one moves independently and slightly out of step with the "
-    "others — never together, never in a single synchronised beat."
-)
-
-# The containment rule stated as physics rather than as a boundary. A boundary
-# is a constraint the model can violate without noticing; a round trip is a
-# property of the motion itself, and it is also exactly what a seamless loop
-# needs, so it costs nothing to ask for.
-RETURN = (
-    "Anything that extends, rises, spreads or is thrown off also comes back: "
-    "it retracts, settles, is reabsorbed, or fades out entirely. No part of the "
-    "motion travels in one direction and keeps going."
-)
-
 # Permission, not instruction. Emitted elements are the difference between an
 # inert object being interesting and being furniture, but they are also the
 # thing a video model is most eager to overdo, so this stays opt-in and the
@@ -212,7 +223,12 @@ QUALITY = {
 }
 
 
-def compose(motion=None, preset=None, quality=None, strategy=None, emit=False):
+DEFAULT_ENERGY = {"native": "lively", "event": "lively",
+                  "part": "calm", "surface": "still"}
+
+
+def compose(motion=None, preset=None, quality=None, strategy=None, emit=False,
+            energy=None):
     """Build the motion clause: strategy, what it does, what stays put, feel."""
     parts = []
     if strategy:
@@ -233,9 +249,10 @@ def compose(motion=None, preset=None, quality=None, strategy=None, emit=False):
         parts.append(QUALITY[quality])
     if not parts:
         raise SystemExit("Give --strategy, --motion or --preset.")
+    parts.append(ENERGY[energy or DEFAULT_ENERGY.get(strategy, "lively")].rstrip("."))
     parts.append(DETAIL.rstrip("."))
     parts.append(RETURN.rstrip("."))
-    parts.append(BANNED.rstrip("."))
+    parts.append(NEVER.rstrip("."))
     parts.append(CAUSE.rstrip("."))
     return ". ".join(p.strip().rstrip(".") for p in parts) + "."
 

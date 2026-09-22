@@ -108,6 +108,28 @@ something removed, opened, split, filled — as long as it returns to its
 opening state so the loop closes. Without that permission an object can only
 ever jiggle.
 
+## How much it moves
+
+`--energy` decides whether the object itself moves, separately from what it is
+doing. Body motion is not the enemy — aimless body motion is. A squash, a
+recoil, a quick shake, an anticipation before an action: that is most of the
+vocabulary that makes something feel alive, and forbidding it to avoid a
+turntable spin throws away the whole language.
+
+| energy | the object |
+|---|---|
+| `still` | holds completely rigid |
+| `calm` | leans, settles, breathes a little |
+| `lively` | squashes, tilts, recoils, shakes, springs back |
+| `playful` | anticipates, overshoots, wobbles, hops in place |
+
+Defaults follow the strategy — `native` and `event` get `lively`, `part` gets
+`calm`, `surface` gets `still` — and an explicit `--energy` always wins. If a
+result feels lifeless, raise it before changing anything else.
+
+Only two things stay forbidden at every level: rotating as a whole, and
+drifting. Everything else is available.
+
 **Small and many beats large and one.** A single big motion of the whole object
 is the obvious choice and the worst one: it risks the frame edge, it reads as
 generic, and it says nothing about what the object is. Motion distributed over
