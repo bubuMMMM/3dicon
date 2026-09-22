@@ -91,7 +91,11 @@ def normalize_framing(A, C, out_dir, master=384, target=None):
                   boxes[:, 2].min(), boxes[:, 3].max()])
     ow, oh = b[1] - b[0] + 1, b[3] - b[2] + 1
     ocx, ocy = (b[0] + b[1]) / 2, (b[2] + b[3]) / 2
-    canvas = min(ow / tw, oh / th)
+    # max, not min. min sizes the canvas to whichever dimension needs less
+    # room, so anything markedly taller than it is wide (or the reverse) is
+    # cropped at both ends — and it never showed up, because a roughly square
+    # icon is the case where the two agree.
+    canvas = max(ow / tw, oh / th)
     x0, y0 = ocx - tcx * canvas, ocy - tcy * canvas
 
     os.makedirs(out_dir, exist_ok=True)

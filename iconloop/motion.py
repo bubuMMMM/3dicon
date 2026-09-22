@@ -157,6 +157,23 @@ RETURN = (
     "motion travels in one direction and keeps going."
 )
 
+# A high energy budget is an invitation to invent, and what gets invented is
+# usually an event the object could not actually perform: a sealed thing
+# releasing its contents, a solid thing behaving like a liquid, something
+# appearing that the object has no way to produce. It reads as wrong instantly
+# even when the motion itself is well made.
+#
+# Energy should buy exaggeration of timing and deformation, never a new event.
+PLAUSIBLE = (
+    "Everything that happens must be something this object could plausibly do "
+    "in its ordinary use, in exactly the state it is shown in. Do not invent "
+    "events it could not perform: what is closed or sealed stays closed unless "
+    "opening it is the action itself, nothing escapes a container that is not "
+    "open, and nothing appears that this object has no way to produce. "
+    "Exaggeration belongs to the timing and the deformation, never to adding "
+    "an event that could not happen."
+)
+
 # Permission, not instruction. Emitted elements are the difference between an
 # inert object being interesting and being furniture, but they are also the
 # thing a video model is most eager to overdo, so this stays opt-in and the
@@ -164,8 +181,9 @@ RETURN = (
 EMIT = (
     "The object may briefly produce small elements of its own — a fragment, a "
     "droplet, a spark, a puff, a glint. Anything it produces is much smaller "
-    "than the object, lasts only a few frames, and fades or leaves the frame "
-    "completely rather than accumulating. Nothing ever enters from outside"
+    "than the object, is consistent with what the object is made of or holds, "
+    "lasts only a few frames, and fades or is reabsorbed rather than "
+    "accumulating. Nothing ever enters from outside"
 )
 
 # What the object may also do is TEMPORARILY LOSE PART OF ITSELF and get it
@@ -279,6 +297,7 @@ def compose(motion=None, preset=None, quality=None, strategy=None, emit=False,
     if not parts:
         raise SystemExit("Give --strategy, --motion or --preset.")
     parts.append(ENERGY[energy or DEFAULT_ENERGY.get(strategy, "lively")].rstrip("."))
+    parts.append(PLAUSIBLE.rstrip("."))
     parts.append(DETAIL.rstrip("."))
     parts.append(RETURN.rstrip("."))
     parts.append(NEVER.rstrip("."))
