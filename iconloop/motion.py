@@ -157,6 +157,20 @@ RETURN = (
     "motion travels in one direction and keeps going."
 )
 
+# Drama and magnitude are not the same thing, and conflating them is how an
+# energetic instruction turns into a violent one. What makes a small action
+# read is the contrast with the stillness around it — the pause before, the
+# speed of the move, the settle after. Magnitude adds nothing an icon can use:
+# at the size these are actually viewed, a large movement is just a blur, and
+# anything thrown hard simply leaves.
+RESTRAINT = (
+    "Keep the whole thing understated. This is a small icon, so the motion "
+    "reads through its timing — a held pause, a quick move, a settle — and not "
+    "through how far anything travels. Every movement stays modest in size and "
+    "close to where it began; nothing is violent, forceful or explosive, and "
+    "nothing flies, splashes or scatters."
+)
+
 # A high energy budget is an invitation to invent, and what gets invented is
 # usually an event the object could not actually perform: a sealed thing
 # releasing its contents, a solid thing behaving like a liquid, something
@@ -180,10 +194,12 @@ PLAUSIBLE = (
 # constraints on it are tight.
 EMIT = (
     "The object may briefly produce small elements of its own — a fragment, a "
-    "droplet, a spark, a puff, a glint. Anything it produces is much smaller "
-    "than the object, is consistent with what the object is made of or holds, "
-    "lasts only a few frames, and fades or is reabsorbed rather than "
-    "accumulating. Nothing ever enters from outside"
+    "droplet, a spark, a puff, a glint. Keep these few and tiny — a small "
+    "number of them, each a very small fraction of the object, consistent with "
+    "what the object is made of or holds. They drift only a short distance from "
+    "where they appeared, stay well inside the frame, and fade out or are "
+    "reabsorbed within a few frames. Never a spray, burst, splash or shower, "
+    "and nothing is ever thrown hard or far. Nothing ever enters from outside"
 )
 
 # What the object may also do is TEMPORARILY LOSE PART OF ITSELF and get it
@@ -297,6 +313,7 @@ def compose(motion=None, preset=None, quality=None, strategy=None, emit=False,
     if not parts:
         raise SystemExit("Give --strategy, --motion or --preset.")
     parts.append(ENERGY[energy or DEFAULT_ENERGY.get(strategy, "lively")].rstrip("."))
+    parts.append(RESTRAINT.rstrip("."))
     parts.append(PLAUSIBLE.rstrip("."))
     parts.append(DETAIL.rstrip("."))
     parts.append(RETURN.rstrip("."))

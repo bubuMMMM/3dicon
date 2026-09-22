@@ -17,10 +17,17 @@ import sys
 
 from . import config, encode, kling, matte, motion as motionlib, providers, verify
 
+# The look is stated here rather than left to the caller, because "a 3D X" on
+# its own tends to return a photograph. A photoreal object then inherits
+# photoreal motion, and any exaggeration in the animation reads as violence
+# rather than as character — the style and the motion have to agree.
 STILL_RULES = (
+    "A stylised 3D icon, not a photograph: simplified friendly forms, soft "
+    "matte surfaces, rounded edges, clean flat colour with gentle shading and "
+    "no fine surface texture or photographic detail. "
     "Centred on a fully transparent background, nothing else in frame. "
-    "Soft studio lighting from the upper left, a gentle contact shadow beneath. "
-    "No text, no watermark, no border, no ground plane."
+    "Soft even lighting from the upper left. "
+    "No text, no watermark, no border, no ground plane, no cast shadow."
 )
 
 
