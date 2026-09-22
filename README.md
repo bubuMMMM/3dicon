@@ -4,8 +4,10 @@ A Claude Code skill that turns a prompt into a **looping animated 3D icon with
 real transparency** — an animated WebP you can drop straight into an app.
 
 <p align="center">
-  <img src="skills/animated-3d-icon/examples/duck-loop.png" width="620" alt="the same loop composited on a light and a dark background">
+  <img src="skills/animated-3d-icon/examples/demo.webp" width="620" alt="six icons looping: fire, duck, jelly, balloon, heart, water bottle">
 </p>
+
+<p align="center"><em>Six icons, each one prompt. Every frame has real alpha.</em></p>
 
 No Lottie conversion, no new native dependency. `expo-image`, Chrome and Safari
 all render animated WebP with alpha natively.
