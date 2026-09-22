@@ -69,9 +69,13 @@ def matte(frame_paths, model=DEFAULT_MODEL, progress=True):
 def normalize_framing(A, C, out_dir, master=384, target=None):
     """Write square RGBA masters, the object sized and centred consistently.
 
-    The crop is computed from the MEAN bounding box across the whole loop, not
-    per frame — crop each frame to its own box and the object breathes against
-    the canvas edge, which is far more distracting than the motion itself.
+    The crop is computed from the UNION of the bounding boxes across the whole
+    loop, not per frame and not their mean. Per-frame boxes make the object
+    breathe against the canvas edge, which is more distracting than the motion
+    itself. The mean is worse in a different way: it is an average of frames
+    that may include the object at its largest, so the widest moment of the
+    loop overflows the canvas and is cropped. The union is the only choice that
+    guarantees every frame fits.
 
     target is (width, height, cx, cy) as fractions of the canvas. Default keeps
     the object at ~74% of the frame with a little headroom below centre, which
@@ -82,7 +86,9 @@ def normalize_framing(A, C, out_dir, master=384, target=None):
     for i in range(len(A)):
         ys, xs = np.nonzero(A[i] > 0.5)
         boxes.append([xs.min(), xs.max(), ys.min(), ys.max()])
-    b = np.array(boxes, float).mean(axis=0)
+    boxes = np.array(boxes, float)
+    b = np.array([boxes[:, 0].min(), boxes[:, 1].max(),
+                  boxes[:, 2].min(), boxes[:, 3].max()])
     ow, oh = b[1] - b[0] + 1, b[3] - b[2] + 1
     ocx, ocy = (b[0] + b[1]) / 2, (b[2] + b[3]) / 2
     canvas = min(ow / tw, oh / th)

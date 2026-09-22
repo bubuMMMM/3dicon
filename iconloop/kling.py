@@ -35,6 +35,9 @@ LOOP_RULES = (
     "The background stays flat, empty and completely static. "
     "Nothing enters the frame from outside it — no hands, no text, no captions, "
     "no watermarks, no props. "
+    "Everything stays comfortably inside the frame at all times: no part of the "
+    "object, and nothing it produces, may touch, reach or cross any edge of the "
+    "frame at any point. Keep a clear margin on all four sides throughout. "
     # Deliberately narrower than it used to be. This clause once banned "new
     # objects or effects" outright, which also banned anything the object
     # itself produced — and for an object that does not move on its own, that
@@ -45,16 +48,30 @@ LOOP_RULES = (
 )
 
 
-def composite(still_path, out_path, size=1024):
-    """Flatten a transparent PNG onto the known backing, ready to send."""
+# How much of the canvas the object occupies when it is sent. The image model
+# returns art that fills its frame, and sending that straight on leaves motion
+# nowhere to go: anything that stretches, splashes or throws a piece runs into
+# the canvas edge and is clipped there, permanently, in the source render. The
+# clip then survives every later stage, and framing normalization quietly hides
+# it by scaling the amputated result inward.
+#
+# So the object is padded down to this fraction first. The margin is the room
+# the animation gets to move into.
+FILL = 0.68
+
+
+def composite(still_path, out_path, size=1024, fill=FILL):
+    """Flatten a transparent PNG onto the known backing, padded, ready to send."""
     from PIL import Image
     im = Image.open(still_path).convert("RGBA")
-    side = max(im.size)
-    sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
-    sq.paste(im, ((side - im.width) // 2, (side - im.height) // 2))
-    sq = sq.resize((size, size), Image.LANCZOS)
+    box = im.getbbox()  # trim whatever transparent margin the art already has
+    if box:
+        im = im.crop(box)
+    scale = (size * fill) / max(im.size)
+    im = im.resize((max(1, round(im.width * scale)), max(1, round(im.height * scale))),
+                   Image.LANCZOS)
     bg = Image.new("RGBA", (size, size), BACKING + (255,))
-    bg.alpha_composite(sq)
+    bg.alpha_composite(im, ((size - im.width) // 2, (size - im.height) // 2))
     bg.convert("RGB").save(out_path)
     return out_path
 
