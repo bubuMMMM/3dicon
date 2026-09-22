@@ -52,6 +52,35 @@ report — everything they need is either in the picture or in one line under it
 Do not explain the prompt, list what you did, or describe the image back to
 them. They can see it.
 
+**Then propose the motion and stop again.** Do not animate on the strength of
+the still being approved — the motion is the second decision and it is the one
+that costs four minutes. Propose exactly one:
+
+> **Motion** — *(one plain sentence: what actually happens, in physical terms)*
+> `event` · `lively` · `--emit`
+>
+> Agree, or describe the motion you want?
+
+One sentence and the flags. No reasoning, no alternatives, no explanation of
+what the flags mean.
+
+**If they describe their own motion, translate it.** They will use ordinary
+words; your job is to turn those into the flags and one physical sentence, not
+to pass their phrasing through. Work out:
+
+- *what does this object do when left alone?* → `--strategy`
+- *how much should the object itself move?* → `--energy`
+- *would the action throw something off?* → `--emit`
+- *what literally happens to the material?* → `--motion`
+
+Then show the translated proposal in the same format and confirm before
+running. If what they asked for is not supported — a camera move, something
+entering the frame, the object travelling away — say so in one line and offer
+the nearest thing that is.
+
+`animate --dry-run` composes the full prompt and spends nothing. Use it if you
+need to check what the flags expand to; do not paste the result into the chat.
+
 **After the animation**, one line of numbers and the file:
 
 > **Done** — `flame.webp` · 857 KB · 122f @ 24fps

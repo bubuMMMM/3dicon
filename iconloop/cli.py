@@ -48,11 +48,16 @@ def cmd_animate(args):
     still = args.still or _out(args, "still.png")
     if not os.path.isfile(still):
         sys.exit(f"No still at {still} — run `still` first, or pass --still.")
+    clause = motionlib.compose(args.motion, args.preset, args.feel, args.strategy,
+                              args.emit, args.energy)
+    if args.dry_run:
+        # Compose and show, spend nothing. This is what the motion is agreed
+        # against: the flags are abstract until you can see what they expand to.
+        print(f"\n{clause}\n")
+        return
     sent = _out(args, "sent_to_kling.png")
     kling.composite(still, sent)
     print(f"  composited onto backing {kling.BACKING} -> {sent}")
-    clause = motionlib.compose(args.motion, args.preset, args.feel, args.strategy,
-                              args.emit, args.energy)
     print(f"  motion: {clause[:70]}...")
     model, version = kling.animate(sent, clause, _out(args, "render.mp4"),
                                    duration=args.duration)
@@ -161,6 +166,8 @@ def main():
                        help="how the motion should feel")
         s.add_argument("--still", help="override the still to animate")
         s.add_argument("--duration", type=int, default=5)
+        s.add_argument("--dry-run", action="store_true",
+                       help="print the composed motion prompt and stop, spending nothing")
 
     def add_matte(s):
         s.add_argument("--video", help="override the clip to matte")
