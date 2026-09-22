@@ -128,6 +128,35 @@ CAUSE = (
     "would normally come from the object being handled, show the effect and let "
     "the object produce it itself."
 )
+# Two general moves that make almost any icon read as alive, and that no
+# strategy gets to skip.
+#
+# The first is scale. A single large motion of the whole object is the obvious
+# thing to reach for and the worst of the options: it looks generic and carries
+# no information about what the object is. Many small motions distributed over
+# the object's own details cost nothing and are specific to that object by
+# construction.
+#
+# The second is phase. Anything an object has several of will, left alone, be
+# animated in unison, and unison is the single loudest tell that something was
+# animated rather than observed. Real repeated things drift out of step.
+DETAIL = (
+    "Favour many small motions in the object's own details over one large "
+    "motion of the whole. Small features may form, swell, travel a short "
+    "distance and resolve in place. Where the object has several of the same "
+    "element, each one moves independently and slightly out of step with the "
+    "others — never together, never in a single synchronised beat."
+)
+
+# Containment stated as physics rather than as a boundary. A boundary is a
+# constraint the model can violate without noticing; a round trip is a property
+# of the motion itself, and it is also exactly what a seamless loop needs.
+RETURN = (
+    "Anything that extends, rises, spreads or is thrown off also comes back: "
+    "it retracts, settles, is reabsorbed, or fades out entirely. No part of the "
+    "motion travels in one direction and keeps going."
+)
+
 # Permission, not instruction. Emitted elements are the difference between an
 # inert object being interesting and being furniture, but they are also the
 # thing a video model is most eager to overdo, so this stays opt-in and the
