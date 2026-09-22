@@ -101,9 +101,16 @@ def normalize_framing(A, C, out_dir, master=384, target=None):
     os.makedirs(out_dir, exist_ok=True)
     for old in glob.glob(f"{out_dir}/*.png"):
         os.remove(old)
+    # The crop box can start outside the frame: sizing the canvas to fit the
+    # larger dimension means a wide or tall object needs more room than the
+    # source has on the other axis, and PIL refuses a negative box offset. Pad
+    # onto a transparent canvas instead of cropping, which is the same result
+    # and cannot go out of bounds.
+    side = int(np.ceil(canvas))
     for i in range(len(A)):
         rgba = np.dstack([C[i], (A[i] * 255).clip(0, 255)]).astype(np.uint8)
-        Image.fromarray(rgba, "RGBA").resize(
-            (master, master), Image.LANCZOS,
-            box=(x0, y0, x0 + canvas, y0 + canvas)).save(f"{out_dir}/{i:04d}.png")
+        src = Image.fromarray(rgba, "RGBA")
+        pad = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+        pad.paste(src, (int(round(-x0)), int(round(-y0))))
+        pad.resize((master, master), Image.LANCZOS).save(f"{out_dir}/{i:04d}.png")
     return sorted(glob.glob(f"{out_dir}/*.png"))

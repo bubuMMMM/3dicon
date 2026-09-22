@@ -66,8 +66,9 @@ def cmd_animate(args):
     kling.composite(still, sent)
     print(f"  composited onto backing {kling.BACKING} -> {sent}")
     print(f"  motion: {clause[:70]}...")
-    model, version = kling.animate(sent, clause, _out(args, "render.mp4"),
-                                   duration=args.duration)
+    fn = kling.animate_openrouter if args.via == "openrouter" else kling.animate
+    model, version = fn(sent, clause, _out(args, "render.mp4"),
+                        duration=args.duration, model=args.model)
     print(f"  model: {model}\n  version: {version}")
 
 
@@ -173,6 +174,10 @@ def main():
                        help="how the motion should feel")
         s.add_argument("--still", help="override the still to animate")
         s.add_argument("--duration", type=int, default=5)
+        s.add_argument("--via", choices=("replicate", "openrouter"),
+                       default=config.opt("ICONLOOP_VIDEO_BACKEND", "replicate"),
+                       help="openrouter carries Kling 3.0, Seedance 2.x, Veo 3.1")
+        s.add_argument("--model", help="video model id for the chosen backend")
         s.add_argument("--dry-run", action="store_true",
                        help="print the composed motion prompt and stop, spending nothing")
 

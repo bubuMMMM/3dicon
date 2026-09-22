@@ -15,6 +15,7 @@ miss:
 """
 import os
 import time
+import urllib.request
 
 from . import config, http
 
@@ -86,6 +87,53 @@ def resolve_version(model=None):
     if not v:
         raise SystemExit(f"Could not resolve a version for {model}.")
     return model, v
+
+
+OR_API = "https://openrouter.ai/api/v1/videos"
+
+
+def animate_openrouter(image_path, motion_prompt, out_path, duration=5,
+                       model=None, poll=10):
+    """Same job through OpenRouter, which carries models Replicate does not.
+
+    Replicate's kwaivgi account stops at kling-v2.5-turbo-pro; OpenRouter lists
+    Kling 3.0, Seedance 2.x, Veo 3.1, Hailuo 3 and Wan 2.7, fourteen of which
+    take a first AND last frame. Same loop trick, wider choice of model, and
+    one key for the still and the motion.
+    """
+    import base64
+    k = config.key("OPENROUTER_API_KEY", "run image-to-video via OpenRouter")
+    model = model or config.opt("ICONLOOP_VIDEO_MODEL", "kwaivgi/kling-v3.0-pro")
+    data_uri = "data:image/png;base64," + base64.b64encode(open(image_path, "rb").read()).decode()
+    frame = lambda t: {"type": "image_url", "image_url": {"url": data_uri}, "frame_type": t}
+
+    prompt = f"{motion_prompt.strip().rstrip('.')}. {LOOP_RULES}"
+    job = http.post_json(OR_API, {
+        "model": model,
+        "prompt": prompt,
+        # The loop trick again: the last frame is the first frame.
+        "frame_images": [frame("first_frame"), frame("last_frame")],
+        "duration": duration,
+    }, {"Authorization": f"Bearer {k}"})
+
+    url = job.get("polling_url") or f"{OR_API}/{job['id']}"
+    while job.get("status") in ("queued", "pending", "running", "in_progress", "processing"):
+        time.sleep(poll)
+        job = http.get_json(url, {"Authorization": f"Bearer {k}"})
+        print(f"  {model}: {job.get('status')}", flush=True)
+
+    if job.get("status") != "completed":
+        raise RuntimeError(f"{model} failed: {job.get('error') or job.get('status')}")
+
+    vid = job["unsigned_urls"][0]
+    req = urllib.request.Request(vid, headers={"Authorization": f"Bearer {k}",
+                                               "User-Agent": http.UA})
+    with urllib.request.urlopen(req, timeout=600) as r, open(out_path, "wb") as f:
+        f.write(r.read())
+    cost = (job.get("usage") or {}).get("cost")
+    print(f"  {model}: {os.path.getsize(out_path)/1024/1024:.1f} MB"
+          f"{f' · ${cost}' if cost else ''} -> {out_path}", flush=True)
+    return model, job.get("generation_id", "")
 
 
 def animate(image_path, motion_prompt, out_path, duration=5, model=None, poll=10):
