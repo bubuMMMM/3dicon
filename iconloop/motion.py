@@ -55,10 +55,11 @@ STRATEGIES = {
         "the object at rest, which is what makes the action read"
     ),
     "part": (
-        "The body of the object is an anchor and stays completely still. Only "
-        "one small part of it moves — the part that would move first if the "
-        "object were disturbed, or the part that is loose, hinged or light. "
-        "The moving part is a small fraction of the whole"
+        "The body of the object is an anchor: its outline and its position are "
+        "fixed for the entire clip. Only one small part of it moves — the part "
+        "that is loose, hinged, hanging or light. The moving part is a small "
+        "fraction of the whole, and it moves under its own weight or its own "
+        "tension, never because the body carries it"
     ),
     "surface": (
         "The object's form does not change at all and nothing about it moves. "
@@ -66,6 +67,23 @@ STRATEGIES = {
         "a colour or a material state moving over a shape that stays put"
     ),
 }
+
+# The subtlest way the whole-object ban gets defeated: the model looks for a
+# CAUSE for the motion, and the most obvious cause is usually the object being
+# moved by something. It then animates the cause rather than the effect, and
+# the result is a displaced object with a perfectly good excuse — which still
+# reads as the icon bobbing, because at icon size the excuse is invisible and
+# only the displacement is legible.
+#
+# So: the driving force acts on the object where it stands.
+CAUSE = (
+    "Whatever drives the motion acts on the object where it stands. Nothing "
+    "lifts, carries, tilts, pulls, drags, shakes or repositions it, and no "
+    "unseen hand or force displaces it. If the effect would normally be caused "
+    "by the object being moved, show the effect alone and keep the object "
+    "completely stationary — gravity, heat, air, tension and its own internal "
+    "forces are enough."
+)
 
 # Permission, not instruction. Emitted elements are the difference between an
 # inert object being interesting and being furniture, but they are also the
@@ -184,6 +202,7 @@ def compose(motion=None, preset=None, quality=None, strategy=None, emit=False):
     if not parts:
         raise SystemExit("Give --strategy, --motion or --preset.")
     parts.append(BANNED.rstrip("."))
+    parts.append(CAUSE.rstrip("."))
     return ". ".join(p.strip().rstrip(".") for p in parts) + "."
 
 

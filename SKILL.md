@@ -79,6 +79,13 @@ something removed, opened, split, filled — as long as it returns to its
 opening state so the loop closes. Without that permission an object can only
 ever jiggle.
 
+**Animate the effect, not its cause.** The commonest way a good result still
+comes out wrong: the model reaches for whatever would normally *cause* the
+motion, and that cause is usually the object being moved by something. The
+physics ends up correct and the icon ends up bobbing, because at icon size the
+cause is invisible and only the displacement reads. Describe the effect by
+itself and let gravity, heat, air, tension or the object's own forces drive it.
+
 Then say in `--motion` what the specific action is, in plain physical language.
 Describe what happens to the material, not what the animation should feel like.
 
