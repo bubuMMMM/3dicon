@@ -6,8 +6,8 @@ Turn a prompt into a looping animated icon with **real transparency**.
   <img src="examples/timer/contact_sheet.png" width="560" alt="the same loop on a light and a dark background">
 </p>
 
-GPT Image, Nano Banana or OpenRouter for the art → Kling on Replicate for the
-motion → exact-unpremultiply matting for the alpha → animated WebP out.
+GPT Image, Nano Banana or OpenRouter for the art → Kling 3.0 via OpenRouter
+for the motion → exact-unpremultiply matting for the alpha → animated WebP out.
 
 No Lottie conversion. A "video to Lottie" tool just embeds the same raster
 frames as base64 inside a JSON, which is bigger than the WebP and buys nothing —
@@ -44,7 +44,8 @@ thing. `run` chains them if you want that.
 | `gemini` | `GOOGLE_API_KEY` | Nano Banana image models |
 | `openrouter` | `OPENROUTER_API_KEY` | one key for both, via the unified Image API; set `ICONLOOP_IMAGE_MODEL` |
 
-Animation always goes through Replicate (`REPLICATE_API_TOKEN`).
+Animation goes through OpenRouter on `kwaivgi/kling-v3.0-pro` by default;
+`--model` swaps it, `--via replicate` falls back to Kling 2.5.
 
 ## The three ideas worth stealing
 
