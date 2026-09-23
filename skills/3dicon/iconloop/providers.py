@@ -72,12 +72,26 @@ def resolve_model(backend):
         return sorted(cands, key=rank)[-1]
 
     if backend == "openrouter":
-        # OpenRouter's catalogue is large and its ids are namespaced; auto-picking
-        # "newest" across eight providers would be a guess, so this one asks.
+        # This used to refuse and ask the caller to name a model, which just
+        # moved the guessing one level up — and a guessed id fails at the API
+        # rather than here. OpenRouter publishes its image catalogue, so pick
+        # from what actually exists.
+        k = config.key("OPENROUTER_API_KEY", "generate the still via OpenRouter")
+        data = http.get_json("https://openrouter.ai/api/v1/images/models",
+                             {"Authorization": f"Bearer {k}"})
+        ids = [m.get("id") or m.get("slug") or "" for m in (data.get("data") or data.get("models") or [])]
+        gpt = [i for i in ids if i.startswith("openai/gpt-image-")]
+        if gpt:
+            pick = _newest_openai([i.split("/", 1)[1] for i in gpt])
+            if pick:
+                return "openai/" + pick
+        gem = [i for i in ids if i.startswith("google/") and "image" in i]
+        if gem:
+            return sorted(gem)[-1]
         raise SystemExit(
-            "Set ICONLOOP_IMAGE_MODEL for the openrouter backend "
-            "(e.g. openai/gpt-image-2.5). Browse https://openrouter.ai/collections/image-models"
-        )
+            "No gpt-image or Gemini image model is listed on this OpenRouter "
+            "account. Set ICONLOOP_IMAGE_MODEL explicitly — the catalogue is at "
+            "https://openrouter.ai/collections/image-models")
 
     raise SystemExit(f"Unknown image backend: {backend}")
 
