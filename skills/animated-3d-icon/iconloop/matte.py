@@ -66,7 +66,12 @@ def matte(frame_paths, model=DEFAULT_MODEL, progress=True):
     return np.stack(A), np.stack(C)
 
 
-def normalize_framing(A, C, out_dir, master=384, target=None):
+# The render arrives at 1440px. Mastering at 384 threw away most of it, and
+# since the encode cannot add detail back, every downstream size was capped by
+# a number chosen for nothing but convenience. 512 keeps enough that a 384px
+# or 456px output is a genuine downscale rather than an upscale, and the master
+# frames are intermediate files that never ship.
+def normalize_framing(A, C, out_dir, master=512, target=None):
     """Write square RGBA masters, the object sized and centred consistently.
 
     The crop is computed from the UNION of the bounding boxes across the whole

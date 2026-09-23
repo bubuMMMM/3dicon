@@ -185,13 +185,18 @@ def main():
         s.add_argument("--video", help="override the clip to matte")
         s.add_argument("--model", default=matte.DEFAULT_MODEL)
         s.add_argument("--extract", type=int, default=640, help="matting resolution")
-        s.add_argument("--master", type=int, default=384, help="master frame size")
+        s.add_argument("--master", type=int, default=512, help="master frame size")
 
     def add_encode(s):
         s.add_argument("--source-fps", type=float, default=24.0)
         s.add_argument("--fps", type=float, help="defaults to the source rate")
-        s.add_argument("--size", type=int, default=288)
-        s.add_argument("--quality", type=int, default=50)
+        # 384, not 288: an icon drawn at 152pt on a 3x screen needs ~456px, so
+        # the old default was already being upscaled on the device it was made
+        # for. Quality barely matters by comparison — going from 50 to 90 buys
+        # about one level of colour out of 255 for half again the bytes — so
+        # the size moves and the quality only nudges.
+        s.add_argument("--size", type=int, default=384)
+        s.add_argument("--quality", type=int, default=60)
         s.add_argument("--name", help="output basename")
         s.add_argument("--sweep", action="store_true", help="print size vs fps and stop")
         s.add_argument("--webm", action="store_true", help="also write VP9+alpha")

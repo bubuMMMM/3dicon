@@ -184,6 +184,13 @@ Describe what happens to the material, not what the animation should feel like.
 
 ## Rules that matter
 
+**Resolution is the quality lever, not the WebP quality setting.** Measured on
+one icon: quality 50 to 90 cut colour error from 2.96 to 1.84 out of 255 and
+added 500KB — nothing you can see. The visible loss is the downscale from a
+1440px render. Defaults are now a 512px master and a 384px output; raise
+`--size` before you touch `--quality`, and never above the master, which only
+upscales.
+
 **Encode at the source frame rate.** Kling returns 24fps. Sampling down to 8fps
 to hit a size target is the single most common way to ruin one of these — it
 produces judder that looks like a bad render, bad matting, or a bad player, and
