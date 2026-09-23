@@ -63,3 +63,7 @@ no visible seam.
 The background is removed against a colour we chose ourselves, which means the
 original colours can be solved for exactly rather than guessed — that is what
 keeps soft edges soft instead of leaving a halo.
+
+## Licence
+
+MIT. Icons you generate with it are yours, with no restrictions.
