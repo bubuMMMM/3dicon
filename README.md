@@ -1,15 +1,12 @@
 # /3dicon
 
-**One prompt in, a looping animated 3D icon out** — with real transparency — an animated WebP you can drop straight into an app.
+**One prompt in, a looping animated 3D icon out** (with real transparency) an animated WebP you can drop straight into your app UI.
 
 <p align="center">
-  <img src="skills/3dicon/examples/demo.webp" width="620" alt="eight icons looping around the /3dicon wordmark">
+  <img src="skills/3dicon/examples/banner.webp" width="820" alt="eight icons looping around the /3dicon wordmark">
 </p>
 
-<p align="center"><em>Eight icons, one prompt each. Every frame has real alpha — and this banner was made by the skill.</em></p>
 
-No Lottie conversion, no new native dependency. `expo-image`, Chrome and Safari
-all render animated WebP with alpha natively.
 
 ## Install
 
@@ -18,20 +15,22 @@ all render animated WebP with alpha natively.
 /plugin install 3dicon
 ```
 
-Or clone it and symlink the skill:
+One OpenRouter key covers the whole pipeline — the image model and the video
+model both run through it.
 
 ```bash
-git clone https://github.com/samyost/3dicon
-ln -s "$PWD/3dicon/skills/3dicon" ~/.claude/skills/
-```
-
-Then:
-
-```bash
-cd skills/3dicon
+cd ~/.claude/skills/3dicon
 pip install -r requirements.txt
-cp .env.example .env          # one OpenRouter key covers the whole pipeline
+cp .env.example .env
 ```
+
+Put your key in `.env`:
+
+```
+OPENROUTER_API_KEY=sk-or-...
+```
+
+Get one at [openrouter.ai/keys](https://openrouter.ai/keys).
 
 `ffmpeg` must be on PATH. The first run downloads a ~180MB matting model.
 
@@ -39,75 +38,31 @@ cp .env.example .env          # one OpenRouter key covers the whole pipeline
 
 Ask for it in plain words:
 
-> make an animated 3d fire icon
+> make an animated 3d fire icon using /3dicon
 
 It generates one still, shows it, and waits for you to approve it before
 spending anything on motion. Then it proposes the motion and waits again.
 
-Under the hood:
-
-```bash
-python -m iconloop --out out still   --prompt "a 3D stopwatch, sage green and cream"
-python -m iconloop --out out animate --strategy native --energy lively
-python -m iconloop --out out matte
-python -m iconloop --out out encode --sweep      # what each frame rate costs
-python -m iconloop --out out encode --size 288 --name timer
-python -m iconloop --out out verify
-```
-
-Roughly **$0.90 and four minutes** per icon.
-
 ## How it works
 
-| stage | what happens |
-|---|---|
-| `still` | GPT Image / Nano Banana / OpenRouter, newest model resolved at runtime |
-| `animate` | Seedance via OpenRouter, first frame **and last frame** |
-| `matte` | rembg for alpha, then an exact unpremultiply for the colour |
-| `encode` | animated WebP with soft alpha; WebM and MP4 optional |
-| `verify` | measures whether it actually moved, and whether the loop closes |
+```mermaid
+flowchart LR
+    P["your prompt"] --> S["still image<br/><sub>GPT Image</sub>"]
+    S --> F["first frame"]
+    S --> L["last frame"]
+    F --> V["video model<br/><sub>Seedance</sub>"]
+    L --> V
+    V --> M["remove background<br/><sub>every frame</sub>"]
+    M --> E["animated .webp<br/><sub>real alpha</sub>"]
+```
 
-## Three ideas worth stealing
+The trick is in the middle: **the same still is sent as both the first and the
+last frame**, so the model returns to where it began and the loop closes with
+no visible seam.
 
-**1. The last frame is the first frame.** Give the video model your start image
-as its end image too and it returns to the opening pose, so the loop closes
-instead of ping-ponging. Measured on one icon: the seam is *smaller* than an
-average frame step.
-
-**2. Composite onto a backing you chose.** The model cannot take alpha, so the
-still is flattened onto a known mid-grey. Because the colour is known exactly,
-matting solves `C = (F − (1−a)·BG)/a` for the true foreground instead of
-estimating it — edge error 26.9 → 15.9 against ground truth.
-
-**3. Encode at the source frame rate.** Sampling 24fps down to 8fps to hit a
-file-size target is the single easiest way to ruin one of these. It produces
-judder that looks like a bad render, bad matting or a bad player, and is none
-of those. `--sweep` prints what each rate actually costs.
-
-## Choosing the motion
-
-The one question that decides everything: **what does this object do when left
-alone?**
-
-| answer | `--strategy` |
-|---|---|
-| It moves by itself — flows, burns, beats | `native` |
-| Nothing. It is inert until used | `event` |
-| Nothing, but one part is loose or hinged | `part` |
-| Nothing, and it has no moving parts | `surface` |
-
-Most icons are inert. Asking an inert object to "move naturally" is what gets
-you a turntable spin.
-
-`--energy still | calm | lively | playful` decides how much the object itself
-moves. `--emit` lets it throw off a spark or a fragment.
-
-## Limits
-
-The soft contact shadow does not survive matting, file size scales with frame
-count, transparent MP4 needs an x265 build most distros don't ship, and
-animated WebP can't honour reduced-motion. All measured, with numbers, in
-[docs/limitations.md](skills/3dicon/docs/limitations.md).
+The background is removed against a colour we chose ourselves, which means the
+original colours can be solved for exactly rather than guessed — that is what
+keeps soft edges soft instead of leaving a halo.
 
 ## Licence
 
