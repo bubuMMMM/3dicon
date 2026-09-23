@@ -1,13 +1,12 @@
-# animated-3d-icon
+# /3dicon
 
-A Claude Code skill that turns a prompt into a **looping animated 3D icon with
-real transparency** — an animated WebP you can drop straight into an app.
+**One prompt in, a looping animated 3D icon out** — with real transparency — an animated WebP you can drop straight into an app.
 
 <p align="center">
-  <img src="skills/animated-3d-icon/examples/demo.webp" width="620" alt="six icons looping: fire, duck, jelly, balloon, heart, water bottle">
+  <img src="skills/3dicon/examples/demo.webp" width="620" alt="eight icons looping around the /3dicon wordmark">
 </p>
 
-<p align="center"><em>Six icons, each one prompt. Every frame has real alpha.</em></p>
+<p align="center"><em>Eight icons, one prompt each. Every frame has real alpha — and this banner was made by the skill.</em></p>
 
 No Lottie conversion, no new native dependency. `expo-image`, Chrome and Safari
 all render animated WebP with alpha natively.
@@ -15,21 +14,21 @@ all render animated WebP with alpha natively.
 ## Install
 
 ```
-/plugin marketplace add samyost/animated-3d-icon
-/plugin install animated-3d-icon
+/plugin marketplace add samyost/3dicon
+/plugin install 3dicon
 ```
 
 Or clone it and symlink the skill:
 
 ```bash
-git clone https://github.com/samyost/animated-3d-icon
-ln -s "$PWD/animated-3d-icon/skills/animated-3d-icon" ~/.claude/skills/
+git clone https://github.com/samyost/3dicon
+ln -s "$PWD/3dicon/skills/3dicon" ~/.claude/skills/
 ```
 
 Then:
 
 ```bash
-cd skills/animated-3d-icon
+cd skills/3dicon
 pip install -r requirements.txt
 cp .env.example .env          # one OpenRouter key covers the whole pipeline
 ```
@@ -108,7 +107,7 @@ moves. `--emit` lets it throw off a spark or a fragment.
 The soft contact shadow does not survive matting, file size scales with frame
 count, transparent MP4 needs an x265 build most distros don't ship, and
 animated WebP can't honour reduced-motion. All measured, with numbers, in
-[docs/limitations.md](skills/animated-3d-icon/docs/limitations.md).
+[docs/limitations.md](skills/3dicon/docs/limitations.md).
 
 ## Licence
 

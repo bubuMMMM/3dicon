@@ -1,5 +1,5 @@
 {
-  "name": "animated-3d-icon",
+  "name": "3dicon",
   "owner": {
     "name": "Sam Yost"
   },
@@ -9,12 +9,12 @@
   },
   "plugins": [
     {
-      "name": "animated-3d-icon",
+      "name": "3dicon",
       "description": "Generate a 3D icon, animate it into a seamless loop, key the background out with an exact unpremultiply, and encode it as an animated WebP with true soft alpha",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/animated-3d-icon"
+        "./skills/3dicon"
       ]
     }
   ]

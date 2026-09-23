@@ -1,9 +1,9 @@
 ---
-name: animated-3d-icon
+name: 3dicon
 description: Turn a prompt or a still image into a looping animated icon with real transparency — GPT Image / Nano Banana for the art, Seedance via OpenRouter for the motion, exact-unpremultiply matting for the alpha, animated WebP out. Use when asked to animate an app icon, make a 3D icon loop, produce a transparent animated asset, or add motion to flat icon art.
 ---
 
-# animated-3d-icon
+# 3dicon
 
 Generate a still, animate it into a seamless loop, key the background out
 properly, and encode it as an animated WebP with true soft alpha — the format
