@@ -11,7 +11,7 @@
 ## Install
 
 ```
-/plugin marketplace add samyost/3dicon
+/plugin marketplace add samyost1/3dicon
 /plugin install 3dicon
 ```
 
