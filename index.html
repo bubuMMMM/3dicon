@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f4f1eb" />
+  <meta name="description" content="Create polished looping 3D icons from one prompt." />
+  <title>3DICON — Make an icon move</title>
+  <style>
+    :root {
+      --paper: #f4f1eb;
+      --ink: #171717;
+      --muted: #77736e;
+      --line: rgba(23,23,23,.12);
+      --soft: #e9e4db;
+      --lime: #c5f06a;
+      --blue: #c9d9ff;
+      --coral: #ffb4a7;
+      --radius: 26px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: -0.02em;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1180px, calc(100% - 36px)); margin: 0 auto; }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      height: 82px; border-bottom: 1px solid var(--line);
+    }
+    .brand { display:flex; gap:10px; align-items:center; text-decoration:none; color:var(--ink); font-weight:900; letter-spacing:-.08em; font-size:24px; }
+    .brand-mark { width:31px; height:31px; border-radius:10px 10px 10px 3px; background:var(--ink); position:relative; transform:rotate(-8deg); }
+    .brand-mark::after { content:""; position:absolute; width:10px; height:10px; background:var(--lime); border-radius:50%; right:5px; top:5px; }
+    .nav { color:var(--muted); font-size:13px; display:flex; gap:22px; align-items:center; }
+    .nav a { color:inherit; text-decoration:none; }
+    .pill { border:1px solid var(--line); border-radius:99px; padding:9px 13px; color:var(--ink); background:rgba(255,255,255,.24); }
+    .hero { padding: 88px 0 58px; display:grid; grid-template-columns: 1.05fr .95fr; gap:70px; align-items:end; }
+    .eyebrow { display:inline-flex; align-items:center; gap:8px; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.12em; font-weight:800; }
+    .eyebrow i { width:7px; height:7px; border-radius:50%; background:#ff644f; display:block; }
+    h1 { font-size: clamp(56px, 8vw, 112px); line-height:.83; letter-spacing:-.095em; margin:22px 0 28px; max-width:680px; }
+    .hero-copy { font-size:18px; line-height:1.45; color:var(--muted); max-width:470px; }
+    .hero-copy strong { color:var(--ink); }
+    .hero-note { margin-top:30px; display:flex; gap:9px; align-items:center; font-size:12px; color:var(--muted); }
+    .hero-note span { width:22px; height:22px; display:grid; place-items:center; border-radius:50%; background:var(--lime); color:#202900; font-weight:900; }
+    .studio { background:#1d1d1b; color:#f8f5ef; border-radius:var(--radius); padding:24px; box-shadow:0 24px 80px rgba(30,24,16,.14); }
+    .studio-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:23px; color:#85837f; font-size:11px; text-transform:uppercase; letter-spacing:.11em; font-weight:800; }
+    .status { color:var(--lime); display:flex; align-items:center; gap:7px; }
+    .status i { width:6px; height:6px; background:var(--lime); border-radius:50%; }
+    .canvas {
+      min-height:326px; border-radius:19px; display:grid; place-items:center; overflow:hidden; position:relative;
+      background-color:#242422;
+      background-image: linear-gradient(45deg, #2e2e2b 25%, transparent 25%), linear-gradient(-45deg, #2e2e2b 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #2e2e2b 75%), linear-gradient(-45deg, transparent 75%, #2e2e2b 75%);
+      background-size:28px 28px; background-position:0 0, 0 14px, 14px -14px, -14px 0;
+    }
+    .canvas.empty::before { content:"✦"; color:rgba(255,255,255,.23); font-size:75px; font-weight:200; }
+    .canvas img, .canvas video { display:none; width:76%; height:76%; object-fit:contain; }
+    .canvas.has-image img, .canvas.has-video video { display:block; }
+    .canvas.has-video img { display:none; }
+    .canvas-label { position:absolute; bottom:15px; left:17px; color:rgba(255,255,255,.4); font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+    .studio-actions { display:flex; justify-content:space-between; align-items:center; margin-top:18px; gap:12px; }
+    .model-label { color:#77756f; font-size:11px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .btn { border:0; border-radius:999px; background:var(--lime); color:#182000; padding:13px 18px; font-weight:850; transition:.2s transform, .2s opacity; }
+    .btn:hover { transform:translateY(-2px); }
+    .btn:disabled { opacity:.45; cursor:wait; transform:none; }
+    .btn.secondary { background:#fff; color:var(--ink); }
+    .btn.ghost { background:transparent; color:#f5f2ed; border:1px solid rgba(255,255,255,.18); }
+    .generator { padding: 40px 0 105px; display:grid; grid-template-columns: .78fr 1.22fr; gap:22px; }
+    .panel { background:#fffdf9; border:1px solid var(--line); border-radius:var(--radius); padding:29px; }
+    .panel.dark { background:#1d1d1b; color:#fff; border:0; }
+    .panel h2 { margin:0 0 7px; font-size:27px; letter-spacing:-.06em; }
+    .panel p { margin:0 0 23px; color:var(--muted); line-height:1.4; font-size:14px; }
+    .dark p { color:#9a9892; }
+    label { display:block; font-weight:800; font-size:12px; margin:20px 0 9px; text-transform:uppercase; letter-spacing:.08em; }
+    textarea, select {
+      width:100%; border:1px solid var(--line); background:var(--paper); border-radius:14px; padding:14px; color:var(--ink); outline:none;
+    }
+    textarea { min-height:112px; resize:vertical; line-height:1.4; }
+    textarea:focus, select:focus { border-color:#85827a; box-shadow:0 0 0 3px rgba(197,240,106,.32); }
+    .dark textarea, .dark select { background:#2a2a27; color:#fff; border-color:rgba(255,255,255,.14); }
+    .quick { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .quick button { border:1px solid var(--line); background:transparent; border-radius:99px; padding:7px 10px; color:var(--muted); font-size:12px; }
+    .quick button:hover { border-color:var(--ink); color:var(--ink); }
+    .dark .quick button { border-color:rgba(255,255,255,.18); color:#aaa; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+    .submit-row { display:flex; justify-content:space-between; gap:10px; align-items:center; margin-top:27px; }
+    .hint { color:var(--muted); font-size:11px; line-height:1.3; max-width:160px; }
+    .message { min-height:19px; margin-top:14px; color:#ff8f7e; font-size:13px; }
+    .examples { padding:0 0 110px; }
+    .section-head { display:flex; justify-content:space-between; align-items:end; border-top:1px solid var(--line); padding-top:25px; margin-bottom:25px; }
+    .section-head h2 { font-size:32px; letter-spacing:-.07em; margin:0; }
+    .section-head p { color:var(--muted); font-size:13px; margin:0; }
+    .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+    .card { min-height:170px; border-radius:20px; padding:22px; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; position:relative; }
+    .card:nth-child(1) { background:var(--blue); } .card:nth-child(2) { background:var(--lime); } .card:nth-child(3) { background:var(--coral); }
+    .card-art { font-size:80px; line-height:1; filter:drop-shadow(0 14px 10px rgba(0,0,0,.13)); align-self:center; transform:rotate(-8deg); }
+    .card:nth-child(2) .card-art { transform:rotate(8deg); } .card:nth-child(3) .card-art { transform:rotate(-3deg); }
+    .card small { font-weight:850; text-transform:uppercase; letter-spacing:.08em; font-size:10px; opacity:.58; }
+    footer { border-top:1px solid var(--line); padding:25px 0 40px; color:var(--muted); font-size:12px; display:flex; justify-content:space-between; }
+    @media (max-width: 850px) {
+      .hero, .generator { grid-template-columns:1fr; gap:34px; }
+      .hero { padding-top:54px; }
+      h1 { font-size:clamp(62px, 17vw, 96px); }
+      .hero-copy { font-size:16px; }
+      .cards { grid-template-columns:1fr; }
+      .card { min-height:145px; }
+      .nav a:not(.pill) { display:none; }
+    }
+    @media (max-width: 520px) {
+      .shell { width: min(100% - 24px, 1180px); }
+      header { height:68px; }
+      .brand { font-size:21px; }
+      .hero { padding-bottom:35px; }
+      .studio, .panel { padding:19px; border-radius:21px; }
+      .canvas { min-height:260px; }
+      .form-grid { grid-template-columns:1fr; gap:0; }
+      .submit-row { align-items:flex-start; flex-direction:column; }
+      .submit-row .btn { width:100%; }
+      footer { flex-direction:column; gap:9px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <a class="brand" href="/"><span class="brand-mark"></span>3DICON</a>
+      <nav class="nav">
+        <a href="#how">How it works</a>
+        <a href="#examples">Examples</a>
+        <a class="pill" href="#create">Create icon <span>↗</span></a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <div class="eyebrow"><i></i> 3D icon studio · powered by OpenRouter</div>
+          <h1>Make an icon.<br><em>Make it move.</em></h1>
+          <p class="hero-copy">Describe an object. Get a polished 3D icon ready for your product, your landing page or your next tiny obsession. <strong>One prompt in. One visual identity out.</strong></p>
+          <div class="hero-note"><span>✦</span> Transparent-ready renders · loopable motion</div>
+        </div>
+        <div class="studio" id="preview">
+          <div class="studio-top"><span>Live preview</span><span class="status"><i></i><span id="statusText">waiting for a prompt</span></span></div>
+          <div class="canvas empty" id="canvas">
+            <img id="resultImage" alt="Generated 3D icon preview" />
+            <video id="resultVideo" loop autoplay muted playsinline></video>
+            <div class="canvas-label">alpha canvas · 1024 × 1024</div>
+          </div>
+          <div class="studio-actions">
+            <span class="model-label" id="modelLabel">No render yet</span>
+            <div style="display:flex; gap:8px">
+              <a id="downloadImage" class="btn ghost" style="display:none; text-decoration:none" download="3dicon.png">Download</a>
+              <button id="animateButton" class="btn secondary" disabled>Animate ↗</button>
+            </div>
+          </div>
+          <a id="downloadVideo" class="btn" style="display:none; text-decoration:none; margin-top:10px; text-align:center" download="3dicon-loop.mp4">Download loop ↓</a>
+        </div>
+      </section>
+
+      <section class="generator" id="create">
+        <div class="panel dark">
+          <h2>Build your icon.</h2>
+          <p>Give the object a little personality. The studio handles the boring bits: composition, lighting and a clean background.</p>
+          <label for="prompt">What should exist?</label>
+          <textarea id="prompt" placeholder="A tiny red fire extinguisher with a friendly face..."></textarea>
+          <div class="quick">
+            <button data-prompt="A tiny red fire extinguisher with a friendly face">Fire extinguisher</button>
+            <button data-prompt="A glossy purple game controller with a tiny star">Game controller</button>
+            <button data-prompt="A miniature croissant wearing sunglasses">Croissant</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Shape the mood.</h2>
+          <p>Choose the direction, then let the model do its strange little magic.</p>
+          <div class="form-grid">
+            <div>
+              <label for="style">Style</label>
+              <select id="style">
+                <option>soft, minimal, playful 3D</option>
+                <option>premium Apple-like product render</option>
+                <option>bold clay toy, expressive and rounded</option>
+                <option>glossy futuristic game UI</option>
+                <option>editorial, sculptural and surreal</option>
+              </select>
+            </div>
+            <div>
+              <label for="palette">Palette</label>
+              <select id="palette">
+                <option>warm ivory with one vivid accent</option>
+                <option>black, silver and electric blue</option>
+                <option>pastel pink, lilac and butter yellow</option>
+                <option>deep red, cream and soft orange</option>
+                <option>let the model choose a coherent palette</option>
+              </select>
+            </div>
+          </div>
+          <label for="material">Material</label>
+          <select id="material">
+            <option>matte ceramic with subtle glossy highlights</option>
+            <option>soft inflated rubber, tactile and rounded</option>
+            <option>brushed metal with precise reflections</option>
+            <option>translucent glass with soft internal light</option>
+          </select>
+          <div class="submit-row">
+            <span class="hint">Generation uses your OpenRouter balance. A good prompt beats a long prompt.</span>
+            <button id="generateButton" class="btn">Generate icon ↗</button>
+          </div>
+          <div class="message" id="message" role="status"></div>
+        </div>
+      </section>
+
+      <section class="examples" id="examples">
+        <div class="section-head"><h2>Small objects.<br>Big identity.</h2><p>Made for interfaces that deserve a little charm.</p></div>
+        <div class="cards">
+          <div class="card"><small>01 · Soft utility</small><div class="card-art">🧯</div></div>
+          <div class="card"><small>02 · Playful tech</small><div class="card-art">🎮</div></div>
+          <div class="card"><small>03 · Daily ritual</small><div class="card-art">🥐</div></div>
+        </div>
+      </section>
+    </main>
+
+    <footer id="how"><span>3DICON / icon-loop studio</span><span>One prompt. A loop with a pulse.</span></footer>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const promptInput = $("prompt");
+    const generateButton = $("generateButton");
+    const animateButton = $("animateButton");
+    const canvas = $("canvas");
+    const image = $("resultImage");
+    const video = $("resultVideo");
+    const message = $("message");
+    const statusText = $("statusText");
+    const modelLabel = $("modelLabel");
+    const downloadImage = $("downloadImage");
+    const downloadVideo = $("downloadVideo");
+    let imageData = "";
+    let pollingUrl = "";
+
+    function setMessage(text = "") { message.textContent = text; }
+    function setBusy(button, busy, label) {
+      button.disabled = busy;
+      if (busy) button.dataset.original = button.textContent;
+      button.textContent = busy ? label : (button.dataset.original || button.textContent);
+    }
+    function showImage(src, model) {
+      imageData = src;
+      image.src = src;
+      video.removeAttribute("src");
+      canvas.classList.remove("empty", "has-video");
+      canvas.classList.add("has-image");
+      statusText.textContent = "icon ready";
+      modelLabel.textContent = model || "OpenRouter image model";
+      animateButton.disabled = false;
+      downloadImage.href = src;
+      downloadImage.style.display = "inline-block";
+      downloadVideo.style.display = "none";
+    }
+    function normalizedForVideo(src) {
+      return new Promise((resolve) => {
+        if (src.length < 3600000) return resolve(src);
+        const img = new Image();
+        img.onload = () => {
+          const c = document.createElement("canvas");
+          c.width = 768; c.height = 768;
+          c.getContext("2d").drawImage(img, 0, 0, 768, 768);
+          resolve(c.toDataURL("image/jpeg", .86));
+        };
+        img.onerror = () => resolve(src);
+        img.src = src;
+      });
+    }
+    async function generate() {
+      const prompt = promptInput.value.trim();
+      if (!prompt) { setMessage("Décris ton icône avant de lancer la génération."); promptInput.focus(); return; }
+      setMessage("");
+      setBusy(generateButton, true, "Generating…");
+      statusText.textContent = "rendering still";
+      try {
+        const response = await fetch("/api/generate", {
+          method: "POST", headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({
+            prompt,
+            style: $("style").value,
+            palette: $("palette").value,
+            material: $("material").value
+          })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Generation failed.");
+        showImage(data.image, data.model);
+      } catch (error) {
+        statusText.textContent = "something went wrong";
+        setMessage(error.message);
+      } finally { setBusy(generateButton, false, "Generate icon ↗"); }
+    }
+    async function animateIcon() {
+      if (!imageData) return;
+      setMessage("");
+      setBusy(animateButton, true, "Starting…");
+      statusText.textContent = "starting loop";
+      try {
+        const frame = await normalizedForVideo(imageData);
+        const response = await fetch("/api/animate", {
+          method: "POST", headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({
+            image: frame,
+            prompt: "A gentle, satisfying loop: the object subtly moves in the way it naturally would, then returns to its starting pose.",
+            duration: 5
+          })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Animation failed.");
+        if (data.videoUrl) return showVideo(data.videoUrl, data.model);
+        pollingUrl = data.pollingUrl;
+        statusText.textContent = "rendering loop";
+        for (let i = 0; i < 24; i++) {
+          await new Promise(r => setTimeout(r, 5000));
+          const poll = await fetch("/api/video-status?url=" + encodeURIComponent(pollingUrl));
+          const result = await poll.json();
+          if (result.status === "completed" && result.videoUrl) return showVideo(result.videoUrl, data.model);
+          if (["failed","cancelled","error"].includes(result.status)) throw new Error(result.error || "The video model stopped.");
+          statusText.textContent = "rendering loop · " + result.status;
+        }
+        throw new Error("The render is taking longer than expected. Try again in a moment.");
+      } catch (error) {
+        statusText.textContent = "animation failed";
+        setMessage(error.message);
+      } finally { setBusy(animateButton, false, "Animate ↗"); }
+    }
+    function showVideo(src, model) {
+      video.src = src;
+      video.load();
+      canvas.classList.remove("empty", "has-image");
+      canvas.classList.add("has-video");
+      statusText.textContent = "loop ready";
+      modelLabel.textContent = model || "OpenRouter video model";
+      downloadVideo.href = src;
+      downloadVideo.style.display = "block";
+    }
+    generateButton.addEventListener("click", generate);
+    animateButton.addEventListener("click", animateIcon);
+    promptInput.addEventListener("keydown", (event) => { if (event.metaKey && event.key === "Enter") generate(); });
+    document.querySelectorAll("[data-prompt]").forEach((button) => {
+      button.addEventListener("click", () => { promptInput.value = button.dataset.prompt; promptInput.focus(); });
+    });
+  </script>
+</body>
+</html>
