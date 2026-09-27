@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TT.INTERNAL</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#070707;color:#f5f5f5;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}.wrap{max-width:760px;margin:auto;padding:24px 18px 56px}.nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:64px}.brand{font-weight:850;letter-spacing:-.04em}.pill{font-size:11px;border:1px solid #262626;border-radius:999px;padding:7px 10px;color:#999}h1{font-size:clamp(48px,10vw,78px);line-height:.94;letter-spacing:-.07em;margin:0 0 18px}.sub{color:#8d8d8d;line-height:1.55;margin-bottom:28px}.form{display:flex;gap:8px;padding:8px;border:1px solid #272727;background:#111;border-radius:18px}input{flex:1;min-width:0;border:0;background:transparent;color:white;padding:14px 12px;font-size:15px;outline:none}button,a.btn{border:0;border-radius:12px;padding:13px 16px;font-weight:800;text-decoration:none;cursor:pointer;text-align:center}.primary{background:#fff;color:#000}.ghost{background:#181818;color:#fff;border:1px solid #292929}.status{margin-top:14px;color:#999;display:none}.status.show{display:block}.status.err{color:#ffb0b0}.card{display:none;margin-top:22px;border:1px solid #262626;background:#101010;border-radius:22px;overflow:hidden}.card.show{display:block}.media{aspect-ratio:9/13;background:#050505;display:grid;place-items:center;max-height:520px}.media video,.media img{width:100%;height:100%;object-fit:cover}.content{padding:18px}.source{font-size:11px;color:#9b9b9b;text-transform:uppercase;letter-spacing:.08em}.title{font-size:21px;font-weight:800;letter-spacing:-.03em;margin:10px 0 6px}.author{color:#8d8d8d}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}.meta{margin-top:18px;padding-top:16px;border-top:1px solid #242424;color:#777;font-size:12px;word-break:break-all}@media(max-width:620px){.nav{margin-bottom:46px}.form{display:block}.form button{width:100%}.actions{grid-template-columns:1fr}h1{font-size:52px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="nav"><div class="brand">TT.INTERNAL</div><div class="pill">PRIVATE TOOL</div></div>
+<h1>Colle. Résous. Récupère.</h1>
+<div class="sub">Colle une URL TikTok publique. L'outil récupère les métadonnées et le flux vidéo sans yt-dlp.</div>
+<form id="form" class="form"><input id="url" placeholder="https://www.tiktok.com/@user/video/..."><button class="primary" id="go">Analyser →</button></form>
+<div id="status" class="status"></div>
+<section id="card" class="card"><div id="media" class="media"></div><div class="content"><div id="source" class="source"></div><div id="title" class="title"></div><div id="author" class="author"></div><div class="actions"><a id="open" class="btn primary" target="_blank" rel="noopener">Ouvrir la vidéo</a><button id="copy" class="ghost" type="button">Copier l'URL vidéo</button></div><div id="meta" class="meta"></div></div></section>
+</main>
+<script>
+var current=null;
+function q(id){return document.getElementById(id)}
+function status(t,e){q('status').textContent=t;q('status').className='status show'+(e?' err':'')}
+function render(d){current=d;q('source').textContent=d.source;q('title').textContent=d.title||'Vidéo TikTok';q('author').textContent=d.author?'@'+d.author:'Auteur inconnu';q('open').href=d.videoUrl;q('meta').textContent='ID '+(d.id||'—');q('media').innerHTML='';var v=document.createElement('video');v.src=d.videoUrl;v.controls=true;v.playsInline=true;v.preload='metadata';if(d.cover)v.poster=d.cover;q('media').appendChild(v);q('card').className='card show'}
+q('form').addEventListener('submit',async function(e){e.preventDefault();var value=q('url').value.trim();if(!value)return status('Colle une URL TikTok.',true);q('go').disabled=true;q('card').className='card';status('Analyse en cours…');try{var endpoint='https://www.tikwm.com/api/?url='+encodeURIComponent(value)+'&hd=1';var r=await fetch(endpoint,{headers:{accept:'application/json'}});var j=await r.json();if(!r.ok||j.code!==0||!j.data)throw new Error(j.msg||'Impossible de résoudre cette vidéo.');var d=j.data;render({source:'tikwm',id:String(d.id||''),title:d.title||'',author:(d.author&& (d.author.unique_id||d.author.nickname))||'',cover:d.cover||d.origin_cover||'',videoUrl:d.hdplay||d.play||d.wmplay});status('OK · vidéo résolue')}catch(err){status(err.message||'Erreur',true)}finally{q('go').disabled=false}});
+q('copy').addEventListener('click',async function(){if(!current)return;await navigator.clipboard.writeText(current.videoUrl);q('copy').textContent='Copié ✓';setTimeout(function(){q('copy').textContent="Copier l'URL vidéo"},1200)});
+</script>
+</body></html>
