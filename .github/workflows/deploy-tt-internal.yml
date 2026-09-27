@@ -1,0 +1,28 @@
+name: Deploy TT Internal
+on:
+  push:
+    branches:
+      - deploy/tiktok-internal
+    paths:
+      - "tt-internal-app/**"
+      - ".github/workflows/deploy-tt-internal.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Vercel token
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "VERCEL_TOKEN secret is not configured in this repository."
+            exit 2
+          fi
+      - name: Link or create dedicated Vercel project
+        run: npx vercel@50.40.0 link --yes --project tt-internal --scope bubummmms-projects --token "$VERCEL_TOKEN" --cwd tt-internal-app
+      - name: Deploy production
+        run: |
+          URL=$(npx vercel@50.40.0 deploy --prod --yes --project tt-internal --scope bubummmms-projects --token "$VERCEL_TOKEN" --cwd tt-internal-app)
+          echo "Production: $URL" >> "$GITHUB_STEP_SUMMARY"
